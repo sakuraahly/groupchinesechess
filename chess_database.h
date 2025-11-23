@@ -81,3 +81,6 @@ const char* get_player_name_cn(PlayerColor player);
 void get_current_timestamp(char* buffer, int size);
 
 #endif // CHESS_DATABASE_H
+// 添加缺失的函数声明
+void print_game_summary(const GameRecord* game);
+void save_game_to_file(const GameRecord* game, const char* filename);
