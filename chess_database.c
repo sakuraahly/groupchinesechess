@@ -3,29 +3,22 @@
 #include <string.h>
 #include <time.h>
 
-// ==================== 棋子编码工具函数 ====================
-
-// 编码：颜色 + 类型 → 数字
 int encode_piece(int color, int piece_type) {
     return color * 10 + piece_type;
 }
 
-// 解码：获取棋子颜色
 int get_piece_color(int piece_code) {
     return piece_code / 10;
 }
 
-// 解码：获取棋子类型
 int get_piece_type(int piece_code) {
     return piece_code % 10;
 }
 
-// 根据编码获取中文名
 const char* get_piece_name_cn(int piece_code) {
     int color = get_piece_color(piece_code);
     int type = get_piece_type(piece_code);
     
-    // 红方棋子名
     if (color == COLOR_RED) {
         switch(type) {
             case TYPE_JIANG: return "帅";
@@ -37,7 +30,6 @@ const char* get_piece_name_cn(int piece_code) {
             case TYPE_BING:  return "兵";
             default:         return "未知";
         }
-        // 黑方棋子名
     } else {
         switch(type) {
             case TYPE_JIANG: return "将";
@@ -52,15 +44,12 @@ const char* get_piece_name_cn(int piece_code) {
     }
 }
 
-// ==================== 棋步管理函数 ====================
-
 void init_chess_move(ChessMove* move, int step, int piece_code, 
                      const char* notation, int from_x, int from_y, 
                      int to_x, int to_y) {
     move->step_number = step;
     move->piece_code = piece_code;
     
-    // 安全复制字符串
     strncpy(move->notation, notation, sizeof(move->notation) - 1);
     move->notation[sizeof(move->notation) - 1] = '\0';
     
@@ -68,7 +57,6 @@ void init_chess_move(ChessMove* move, int step, int piece_code,
     strncpy(move->piece_name, name, sizeof(move->piece_name) - 1);
     move->piece_name[sizeof(move->piece_name) - 1] = '\0';
     
-    // 设置坐标（新坐标系：x:0-9行, y:0-8列）
     move->from_x = from_x;
     move->from_y = from_y;
     move->to_x = to_x;
@@ -78,11 +66,8 @@ void init_chess_move(ChessMove* move, int step, int piece_code,
     move->thinking_time = 0;
 }
 
-// ==================== 棋局管理函数 ====================
-
 void init_game_record(GameRecord* game, const char* id, 
                       const char* red_player, const char* black_player) {
-     // 安全复制字符串
     strncpy(game->game_id, id, sizeof(game->game_id) - 1);
     game->game_id[sizeof(game->game_id) - 1] = '\0';
     
@@ -92,11 +77,9 @@ void init_game_record(GameRecord* game, const char* id,
     strncpy(game->player_black, black_player, sizeof(game->player_black) - 1);
     game->player_black[sizeof(game->player_black) - 1] = '\0';
     
-    // 生成棋局标题
     snprintf(game->game_title, sizeof(game->game_title), 
              "%s vs %s", red_player, black_player);
     
-     // 初始化其他字段
     game->move_count = 0;
     game->result = 0;
     strcpy(game->result_str, "未结束");
@@ -117,7 +100,6 @@ void add_move_to_game(GameRecord* game, const ChessMove* move) {
     game->moves[game->move_count] = *move;
     game->move_count++;
     
-    // 更新思考时间统计
     int color = get_piece_color(move->piece_code);
     if (color == COLOR_RED) {
         game->total_red_thinking += move->thinking_time;
@@ -142,8 +124,6 @@ void set_game_result(GameRecord* game, int result) {
         default: strcpy(game->result_str, "未结束");
     }
 }
-
-// ==================== 工具函数 ====================
 
 void print_game_summary(const GameRecord* game) {
     printf("\n=== 棋局摘要 ===\n");
@@ -192,9 +172,4 @@ void get_current_timestamp(char* buffer, int size) {
     time_t now = time(NULL);
     struct tm* timeinfo = localtime(&now);
     strftime(buffer, size, "%Y-%m-%d %H:%M:%S", timeinfo);
-}
-
-// 坐标调试函数
-void print_coordinates(int x, int y) {
-    printf("坐标: 第%d行, 第%d列\n", x, y);
 }
