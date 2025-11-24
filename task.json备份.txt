@@ -1,0 +1,187 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build all",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-lc",
+                "./.vscode/scripts/build_all.sh \"${workspaceFolder}\""
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "LANG": "zh_CN.UTF-8",
+                    "LC_ALL": "zh_CN.UTF-8",
+                    "MSYS_UTF8": "1",
+                    "CONSOLE_ENCODING": "UTF-8"
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "build sdl",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-lc",
+                "mkdir -p ./output && echo Building SDL app... && gcc -Wall -Wextra -g3 main.c -o output/main_sdl.exe $(pkg-config --cflags --libs sdl2 SDL2_image SDL2_mixer) && ./.vscode/scripts/copy_sdl_dlls.sh"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "LANG": "zh_CN.UTF-8",
+                    "LC_ALL": "zh_CN.UTF-8",
+                    "MSYS_UTF8": "1",
+                    "CONSOLE_ENCODING": "UTF-8"
+                }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "copy sdl dlls",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-lc",
+                "./.vscode/scripts/copy_sdl_dlls.sh"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "LANG": "zh_CN.UTF-8",
+                    "LC_ALL": "zh_CN.UTF-8",
+                    "MSYS_UTF8": "1",
+                    "CONSOLE_ENCODING": "UTF-8"
+                }
+            }
+        },
+        {
+            "label": "build current file",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-lc",
+                "./.vscode/scripts/build_current_file.sh \"${file}\""
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "LANG": "zh_CN.UTF-8",
+                    "LC_ALL": "zh_CN.UTF-8",
+                    "MSYS_UTF8": "1",
+                    "CONSOLE_ENCODING": "UTF-8"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "C/C++ Compile Run",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-lc",
+                "./.vscode/scripts/build_current_file.sh \"${file}\""
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "LANG": "zh_CN.UTF-8",
+                    "LC_ALL": "zh_CN.UTF-8",
+                    "MSYS_UTF8": "1",
+                    "CONSOLE_ENCODING": "UTF-8"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "C/C++ Compile Run: Compile",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-lc",
+                "./.vscode/scripts/build_current_file.sh \"${file}\""
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "LANG": "zh_CN.UTF-8",
+                    "LC_ALL": "zh_CN.UTF-8",
+                    "MSYS_UTF8": "1",
+                    "CONSOLE_ENCODING": "UTF-8"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "build sdl win",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-lc",
+                "mkdir -p ./output && echo Building SDL (explicit paths)... && gcc -Wall -Wextra -g3 main_sdl.c -I\"C:/msys64/mingw64/include/SDL2\" -L\"C:/msys64/mingw64/lib\" -o output/main_sdl_win.exe -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_mixer -logg -lvorbis -lopus -lpng16 -ljpeg && ./.vscode/scripts/copy_sdl_dlls.sh"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "LANG": "zh_CN.UTF-8",
+                    "LC_ALL": "zh_CN.UTF-8",
+                    "MSYS_UTF8": "1",
+                    "CONSOLE_ENCODING": "UTF-8"
+                }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "C/C++: gcc.exe 生成活动文件",
+            "type": "shell",
+            "command": "bash",
+            "args": ["-lc", "./.vscode/scripts/build_current_file.sh \"${file}\""],
+            "options": { "cwd": "${workspaceFolder}", "env": { "LANG": "zh_CN.UTF-8", "LC_ALL": "zh_CN.UTF-8", "MSYS_UTF8": "1", "CONSOLE_ENCODING": "UTF-8" } },
+            "problemMatcher": ["$gcc"],
+            "group": { "kind": "build", "isDefault": true },
+            "detail": "调试器生成的任务（已改为使用 build_current_file.sh 以保证正确链接 SDL）。"
+        }
+    ]
+}

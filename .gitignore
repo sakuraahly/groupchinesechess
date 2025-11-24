@@ -1,0 +1,17 @@
+# 忽略所有编译输出
+output/
+*.exe
+*.dll
+*.built_at
+*.built_from
+
+# 忽略VSCode配置（如果不需要共享）
+.vscode/
+
+# 忽略临时文件
+*.tmp
+*.log
+.vscode/
+*.tmp
+*.exe
+*.dll

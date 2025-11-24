@@ -1,0 +1,137 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build all",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-lc",
+                "./.vscode/scripts/build_all.sh \"${workspaceFolder}\""
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "LANG": "zh_CN.UTF-8",
+                    "LC_ALL": "zh_CN.UTF-8",
+                    "MSYS_UTF8": "1",
+                    "CONSOLE_ENCODING": "UTF-8"
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "Build SDL File", // 新增智能SDL构建任务
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-lc",
+                "mkdir -p \"${workspaceFolder}/output\" && echo \"构建SDL应用: ${fileBasename}\" && gcc -Wall -Wextra -g3 \"${file}\" -o \"${workspaceFolder}/output/${fileBasenameNoExtension}.exe\" $(pkg-config --cflags --libs sdl2 SDL2_image SDL2_mixer) -mwindows && echo \"复制SDL DLL文件...\" && ./.vscode/scripts/copy_sdl_dlls.sh"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "LANG": "zh_CN.UTF-8",
+                    "LC_ALL": "zh_CN.UTF-8",
+                    "MSYS_UTF8": "1",
+                    "CONSOLE_ENCODING": "UTF-8"
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true  // 设为默认构建任务
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "detail": "自动链接SDL2、SDL2_image和SDL2_mixer库，适用于任何SDL源文件"
+        },
+        {
+            "label": "C/C++: gcc.exe 生成活动文件", // 修改现有默认任务，使其支持SDL
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-lc",
+                "if grep -q '#include <SDL.h>' \"${file}\" || grep -q '#include <SDL2/SDL.h>' \"${file}\"; then echo '检测到SDL代码，使用SDL专用编译'; mkdir -p \"${workspaceFolder}/output\" && gcc -Wall -Wextra -g3 \"${file}\" -o \"${workspaceFolder}/output/${fileBasenameNoExtension}.exe\" $(pkg-config --cflags --libs sdl2 SDL2_image SDL2_mixer) -mwindows && ./.vscode/scripts/copy_sdl_dlls.sh; else echo '普通C/C++文件，使用标准编译'; ./.vscode/scripts/build_current_file.sh \"${file}\"; fi"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "LANG": "zh_CN.UTF-8",
+                    "LC_ALL": "zh_CN.UTF-8",
+                    "MSYS_UTF8": "1",
+                    "CONSOLE_ENCODING": "UTF-8"
+                }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false  // 取消默认状态，由新任务取代
+            },
+            "detail": "智能构建任务：自动检测SDL头文件并应用正确的链接参数"
+        },
+        {
+            "label": "build sdl", // 优化现有build sdl任务
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-lc",
+                "mkdir -p \"${workspaceFolder}/output\" && echo \"构建SDL应用...\" && gcc -Wall -Wextra -g3 \"${workspaceFolder}/main.c\" -o \"${workspaceFolder}/output/main_sdl.exe\" $(pkg-config --cflags --libs sdl2 SDL2_image SDL2_mixer) -mwindows && ./.vscode/scripts/copy_sdl_dlls.sh"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "LANG": "zh_CN.UTF-8",
+                    "LC_ALL": "zh_CN.UTF-8",
+                    "MSYS_UTF8": "1",
+                    "CONSOLE_ENCODING": "UTF-8"
+                }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "detail": "构建主SDL应用 (main.c)"
+        },
+        {
+            "label": "build sdl win",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-lc",
+                "mkdir -p ./output && echo Building SDL (explicit paths)... && gcc -Wall -Wextra -g3 main_sdl.c -I\"C:/msys64/mingw64/include/SDL2\" -L\"C:/msys64/mingw64/lib\" -o output/main_sdl_win.exe -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_mixer -logg -lvorbis -lopus -lpng16 -ljpeg && ./.vscode/scripts/copy_sdl_dlls.sh"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "LANG": "zh_CN.UTF-8",
+                    "LC_ALL": "zh_CN.UTF-8",
+                    "MSYS_UTF8": "1",
+                    "CONSOLE_ENCODING": "UTF-8"
+                }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}

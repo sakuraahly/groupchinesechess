@@ -1,11 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <windows.h>
-
-void setConsoleOutputCPToUTF8(){
-    SetConsoleOutputCP(65001);
-}
+#include "platform_console.h"
 
 // 交换两个元素的值
 void swap(int* a, int* b) {
@@ -63,7 +59,8 @@ void printArray(int arr[], int size) {
 // 测试代码
 int main() {
 
-    setConsoleOutputCPToUTF8();
+    /* set console encoding according to CONSOLE_ENCODING env var (UTF-8 default) */
+    setConsoleEncodingFromEnv();
     // 初始化随机数种子
     srand(time(NULL));
     
