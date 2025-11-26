@@ -4,11 +4,14 @@
 #include <string.h>
 #include <ctype.h>
 
+// 解析象棋记谱法（简化版本）
+// 当前版本仅返回固定的坐标，实际应用中需要实现完整的记谱法解析逻辑
 ParseResult parse_notation(const char* notation, int player_color, const GameRecord* game) {
     ParseResult result = {0};
     result.valid = 1;
     
     // 简化解析：根据玩家返回不同的棋子
+    // 注意：这是简化实现，实际需要根据记谱法字符串解析具体的移动
     if (player_color == COLOR_RED) {
         result.piece_code = RED_BING;
         result.from_x = 6;
@@ -27,6 +30,7 @@ ParseResult parse_notation(const char* notation, int player_color, const GameRec
     return result;
 }
 
+// 打印解析结果
 void print_parse_result(const ParseResult* result) {
     if (result->valid) {
         const char* color_str = (get_piece_color(result->piece_code) == COLOR_RED) ? "红方" : "黑方";
