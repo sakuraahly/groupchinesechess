@@ -334,6 +334,170 @@ bool is_pao_move_valid(int from_x, int from_y, int to_x, int to_y, int piece) {
 }
 
 /**
+ * 判断马的移动是否合法
+ */
+bool is_ma_move_valid(int from_x, int from_y, int to_x, int to_y, int piece) {
+    // 检查目标位置是否有己方棋子
+    if (board[to_x][to_y] != EMPTY && is_same_side(piece, board[to_x][to_y])) {
+        return false;
+    }
+    
+    // 马走"日"字，有8个可能的移动方向
+    int dx = abs(to_x - from_x);
+    int dy = abs(to_y - from_y);
+    
+    // 马必须走"日"字：一个方向走2格，另一个方向走1格
+    if (!((dx == 2 && dy == 1) || (dx == 1 && dy == 2))) {
+        return false;
+    }
+    
+    // 检查"蹩马腿"：马腿位置不能有棋子
+    int block_x, block_y;
+    
+    if (dx == 2) { // 竖向走2格，横向走1格
+        block_x = from_x + (to_x - from_x) / 2;
+        block_y = from_y;
+    } else { // 横向走2格，竖向走1格
+        block_x = from_x;
+        block_y = from_y + (to_y - from_y) / 2;
+    }
+    
+    // 马腿位置有棋子则不能移动
+    if (board[block_x][block_y] != EMPTY) {
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * 判断象/相的移动是否合法
+ */
+bool is_xiang_move_valid(int from_x, int from_y, int to_x, int to_y, int piece) {
+    // 检查目标位置是否有己方棋子
+    if (board[to_x][to_y] != EMPTY && is_same_side(piece, board[to_x][to_y])) {
+        return false;
+    }
+    
+    int color = get_piece_color(piece);
+    
+    // 象不能过河
+    if (color == RED && to_x > 4) { // 红相不能过河（河界在第4-5行之间）
+        return false;
+    }
+    if (color == BLACK && to_x < 5) { // 黑象不能过河
+        return false;
+    }
+    
+    // 象走"田"字，必须走对角线2格
+    int dx = abs(to_x - from_x);
+    int dy = abs(to_y - from_y);
+    
+    if (dx != 2 || dy != 2) {
+        return false;
+    }
+    
+    // 检查"塞象眼"：象眼位置不能有棋子
+    int block_x = from_x + (to_x - from_x) / 2;
+    int block_y = from_y + (to_y - from_y) / 2;
+    
+    if (board[block_x][block_y] != EMPTY) {
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * 判断士/仕的移动是否合法
+ */
+bool is_shi_move_valid(int from_x, int from_y, int to_x, int to_y, int piece) {
+    // 检查目标位置是否有己方棋子
+    if (board[to_x][to_y] != EMPTY && is_same_side(piece, board[to_x][to_y])) {
+        return false;
+    }
+    
+    int color = get_piece_color(piece);
+    
+    // 士只能在九宫格内移动
+    if (color == RED) {
+        // 红仕的九宫格：行7-9，列3-5
+        if (to_x < 7 || to_x > 9 || to_y < 3 || to_y > 5) {
+            return false;
+        }
+    } else {
+        // 黑士的九宫格：行0-2，列3-5
+        if (to_x < 0 || to_x > 2 || to_y < 3 || to_y > 5) {
+            return false;
+        }
+    }
+    
+    // 士只能走斜线，每次移动一格
+    int dx = abs(to_x - from_x);
+    int dy = abs(to_y - from_y);
+    
+    if (dx != 1 || dy != 1) {
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * 判断将/帅的移动是否合法
+ */
+bool is_jiang_move_valid(int from_x, int from_y, int to_x, int to_y, int piece) {
+    // 检查目标位置是否有己方棋子
+    if (board[to_x][to_y] != EMPTY && is_same_side(piece, board[to_x][to_y])) {
+        return false;
+    }
+    
+    int color = get_piece_color(piece);
+    
+    // 将/帅只能在九宫格内移动
+    if (color == RED) {
+        // 红帅的九宫格：行7-9，列3-5
+        if (to_x < 7 || to_x > 9 || to_y < 3 || to_y > 5) {
+            return false;
+        }
+    } else {
+        // 黑将的九宫格：行0-2，列3-5
+        if (to_x < 0 || to_x > 2 || to_y < 3 || to_y > 5) {
+            return false;
+        }
+    }
+    
+    // 将/帅只能横着或竖着移动一格
+    int dx = abs(to_x - from_x);
+    int dy = abs(to_y - from_y);
+    
+    if (!((dx == 1 && dy == 0) || (dx == 0 && dy == 1))) {
+        return false;
+    }
+    
+    // 特殊情况：将帅对面（飞将）
+    // 如果目标位置是对方的将/帅，且在同一列且中间无棋子，则允许移动
+    int target_piece = board[to_x][to_y];
+    if (target_piece != EMPTY) {
+        int target_type = get_piece_type(target_piece);
+        int target_color = get_piece_color(target_piece);
+        
+        if (target_type == JIANG && target_color != color) {
+            // 检查是否在同一列且中间无棋子
+            if (from_y == to_y) {
+                int piece_count = count_pieces_between(from_x, from_y, to_x, to_y);
+                if (piece_count == 0) {
+                    return true; // 允许飞将
+                }
+            }
+        }
+    }
+    
+    return true;
+}
+
+
+/**
  * 判断走子是否合法（总验证函数）
  */
 bool is_move_valid(int from_x, int from_y, int to_x, int to_y) {
@@ -348,16 +512,28 @@ bool is_move_valid(int from_x, int from_y, int to_x, int to_y) {
         return false;
     }
     
+    // 检查是否移动到同一位置
+    if (from_x == to_x && from_y == to_y) {
+        return false;
+    }
+    
     // 根据棋子种类调用相应的移动规则验证函数
     int piece_type = get_piece_type(piece);
     switch(piece_type) {
-        case BING:
-            return is_bing_move_valid(from_x, from_y, to_x, to_y, piece);
+        case JIANG:
+            return is_jiang_move_valid(from_x, from_y, to_x, to_y, piece);
+        case SHI:
+            return is_shi_move_valid(from_x, from_y, to_x, to_y, piece);
+        case XIANG:
+            return is_xiang_move_valid(from_x, from_y, to_x, to_y, piece);
+        case MA:
+            return is_ma_move_valid(from_x, from_y, to_x, to_y, piece);
         case JU:
             return is_ju_move_valid(from_x, from_y, to_x, to_y, piece);
         case PAO:
             return is_pao_move_valid(from_x, from_y, to_x, to_y, piece);
-        // 为未来扩展预留其他棋子类型
+        case BING:
+            return is_bing_move_valid(from_x, from_y, to_x, to_y, piece);
         default:
             return false;
     }
@@ -377,4 +553,5 @@ bool make_move(int from_x, int from_y, int to_x, int to_y) {
         return false;
     }
 }
+
 
