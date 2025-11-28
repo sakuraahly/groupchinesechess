@@ -7,11 +7,19 @@
                 "C:/msys64/mingw64/include/SDL2",
                 "C:/msys64/mingw64/include"
             ],
-            "defines": [],
+            "defines": [
+                "SDL_MAIN_HANDLED"  // 添加这个定义
+            ],
             "compilerPath": "C:/msys64/mingw64/bin/gcc.exe",
-            "cStandard": "${default}",
-            "cppStandard": "${default}",
+            "cStandard": "c17",  // 明确指定 C 标准
+            "cppStandard": "c++17", // 明确指定 C++ 标准
             "intelliSenseMode": "windows-gcc-x64",
+            "compilerArgs": [  // 添加编译参数
+                "-g",
+                "-O2",
+                "-Wall",
+                "-Wextra"
+            ],
             "browse": {
                 "path": [
                     "${workspaceFolder}",

@@ -1,17 +1,62 @@
-# 忽略所有编译输出
+# 忽略编译输出
 output/
-*.exe
-*.dll
 *.built_at
 *.built_from
 
-# 忽略VSCode配置（如果不需要共享）
-.vscode/
+# 忽略二进制文件
+## 可执行文件
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+## 动态库
+*.dll
+*.so
+*.so.*
+*.dylib
+## 静态库
+*.lib
+*.a
+*.la
+*.lo
 
-# 忽略临时文件
+# 忽略对象文件
+*.o
+*.ko
+*.obj
+*.elf
+*.mod*
+
+# 忽略调试文件
+*.pdb
+*.idb
+*.dSYM/
+*.su
+*.dwo
+
+# 忽略构建中间文件
+## 链接器输出
+*.ilk
+*.map
+*.exp
+## 依赖文件
+*.d
+## 预编译头
+*.gch
+*.pch
+## 内核模块
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+
+# 忽略编辑器/IDE文件
+## VSCode (谨慎共享)
+.vscode/
+## 临时文件
 *.tmp
 *.log
-.vscode/
-*.tmp
-*.exe
-*.dll
