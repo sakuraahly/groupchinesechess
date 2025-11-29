@@ -14,13 +14,13 @@
 #define BLACK 2          // 黑方
 
 // 棋子种类定义
-#define JIANG  1         // 将/帅
-#define SHI    2         // 士/仕  
-#define XIANG  3         // 象/相
-#define MA     4         // 马
-#define JU     5         // 车
-#define PAO    6         // 炮
-#define BING   7         // 兵/卒
+#define TYPE_JIANG  1         // 将/帅
+#define TYPE_SHI    2         // 士/仕  
+#define TYPE_XIANG  3         // 象/相
+#define TYPE_MA     4         // 马
+#define TYPE_JU     5         // 车
+#define TYPE_PAO    6         // 炮
+#define TYPE_BING   7         // 兵/卒
 
 // 红方棋子
 #define RED_JIANG   11   // 红帅
@@ -149,25 +149,25 @@ void display_board() {
             } else if (color == RED) {
                 // 红方棋子
                 switch(type) {
-                    case JIANG:  printf(" 帅"); break;
-                    case SHI:    printf(" 仕"); break;
-                    case XIANG:  printf(" 相"); break;
-                    case MA:     printf(" 马"); break;
-                    case JU:     printf(" 車"); break;
-                    case PAO:    printf(" 炮"); break;
-                    case BING:   printf(" 兵"); break;
+                    case TYPE_JIANG:  printf(" 帅"); break;
+                    case TYPE_SHI:    printf(" 仕"); break;
+                    case TYPE_XIANG:  printf(" 相"); break;
+                    case TYPE_MA:     printf(" 马"); break;
+                    case TYPE_JU:     printf(" 車"); break;
+                    case TYPE_PAO:    printf(" 炮"); break;
+                    case TYPE_BING:   printf(" 兵"); break;
                     default:     printf(" ?"); break;
                 }
             } else if (color == BLACK) {
                 // 黑方棋子
                 switch(type) {
-                    case JIANG:  printf(" 将"); break;
-                    case SHI:    printf(" 士"); break;
-                    case XIANG:  printf(" 象"); break;
-                    case MA:     printf(" 馬"); break;
-                    case JU:     printf(" 车"); break;
-                    case PAO:    printf(" 砲"); break;
-                    case BING:   printf(" 卒"); break;
+                    case TYPE_JIANG:  printf(" 将"); break;
+                    case TYPE_SHI:    printf(" 士"); break;
+                    case TYPE_XIANG:  printf(" 象"); break;
+                    case TYPE_MA:     printf(" 馬"); break;
+                    case TYPE_JU:     printf(" 车"); break;
+                    case TYPE_PAO:    printf(" 砲"); break;
+                    case TYPE_BING:   printf(" 卒"); break;
                     default:     printf(" ?"); break;
                 }
             } else {
@@ -520,19 +520,19 @@ bool is_move_valid(int from_x, int from_y, int to_x, int to_y) {
     // 根据棋子种类调用相应的移动规则验证函数
     int piece_type = get_piece_type(piece);
     switch(piece_type) {
-        case JIANG:
+        case TYPE_JIANG:
             return is_jiang_move_valid(from_x, from_y, to_x, to_y, piece);
-        case SHI:
+        case TYPE_SHI:
             return is_shi_move_valid(from_x, from_y, to_x, to_y, piece);
-        case XIANG:
+        case TYPE_XIANG:
             return is_xiang_move_valid(from_x, from_y, to_x, to_y, piece);
-        case MA:
+        case TYPE_MA:
             return is_ma_move_valid(from_x, from_y, to_x, to_y, piece);
-        case JU:
+        case TYPE_JU:
             return is_ju_move_valid(from_x, from_y, to_x, to_y, piece);
-        case PAO:
+        case TYPE_PAO:
             return is_pao_move_valid(from_x, from_y, to_x, to_y, piece);
-        case BING:
+        case TYPE_BING:
             return is_bing_move_valid(from_x, from_y, to_x, to_y, piece);
         default:
             return false;
@@ -553,5 +553,6 @@ bool make_move(int from_x, int from_y, int to_x, int to_y) {
         return false;
     }
 }
+
 
 
