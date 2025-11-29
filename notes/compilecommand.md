@@ -8,3 +8,4 @@ gcc -IC:/msys64/mingw64/include/SDL2 -LC:/msys64/mingw64/lib -o ./output/game.ex
 
 新的编译命令(用于displayinterface.c)
 //gcc -IC:/msys64/mingw64/include/SDL2 -LC:/msys64/mingw64/lib -o ./output/game.exe ./src/displayinterface.c -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_mixer -mwindows
+
