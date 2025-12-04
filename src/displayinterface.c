@@ -1,4 +1,5 @@
 //注意,到时候估计打包时外部链接资源(图片,音乐等)的路径又要改,先插个眼.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,19 +7,15 @@
 #include <stdint.h>
 #include <assert.h>
 #include <ctype.h>
-#include <SDL2/SDL.h>
+#include <SDL.h>
 //#include <SDL_main.h> //总之在目前的开发中不需要就是了
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_mixer.h>
-#include <SDL2/SDL_ttf.h>
+#include <SDL_image.h>
+#include <SDL_mixer.h>
+#include <SDL_ttf.h>
 
 // 屏幕尺寸[由于不确定究竟是怎么样的,这里存疑]
 #define SCREEN_WIDTH  1200
 #define SCREEN_HEIGHT 800
-
-// 棋盘实际图片尺寸[这个可以在文件夹中找到]
-#define BOARD_IMG_WIDTH  661
-#define BOARD_IMG_HEIGHT 728
 
 // 棋盘在屏幕上的显示尺寸[没搞懂这个和上面的规则有什么关系]
 #define BOARD_DISPLAY_WIDTH  750
@@ -26,6 +23,19 @@
 
 // 棋子尺寸[图片文件是60*60]
 #define PIECE_SIZE 60
+
+// ====== 分离的坐标系 ======
+// 棋盘图片显示位置（视觉位置）
+#define BOARD_VISUAL_X 225
+#define BOARD_VISUAL_Y 50
+
+// 棋盘格点坐标系原点（逻辑位置）- 这是关键！
+#define GRID_ORIGIN_X 314
+#define GRID_ORIGIN_Y 120
+
+// 网格间距
+#define GRID_WIDTH 68
+#define GRID_HEIGHT 69
 
 // 游戏状态
 typedef enum {
@@ -41,6 +51,7 @@ typedef enum {
 } PieceType;
 
 // 棋盘布局  我想这总不会再搞错了
+// 我也觉得-lin
 PieceType board[10][9] = {
     {BLACK_JU, BLACK_MA, BLACK_XIANG, BLACK_SHI, BLACK_JIANG, BLACK_SHI, BLACK_XIANG, BLACK_MA, BLACK_JU},
     {NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE},
@@ -50,37 +61,8 @@ PieceType board[10][9] = {
     {NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE},
     {RED_BING, NONE, RED_BING, NONE, RED_BING, NONE, RED_BING, NONE, RED_BING},
     {NONE, RED_PAO, NONE, NONE, NONE, NONE, NONE, RED_PAO, NONE},
-    {RED_JU, RED_MA, RED_XIANG, RED_SHI, RED_SHUAI, RED_SHI, RED_XIANG, RED_MA, RED_JU},
-    {NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE}
-};
-
-// 棋盘上每个交叉点的坐标（基于661x728棋盘图片//但是我还没有掌握如何测量计算这个真实的,所以调试经常出错）
-typedef struct {
-    int x, y;
-} BoardPosition;
-
-// 中国象棋棋盘交叉点位置（基于标准棋盘布局）  //说真的,这么精确有什么用,最后不还是要测绘工具
-BoardPosition boardPositions[10][9] = {
-    // 第0行（黑方底线）
-    {{56, 52}, {129, 52}, {202, 52}, {275, 52}, {348, 52}, {421, 52}, {494, 52}, {567, 52}, {604, 52}},
-    // 第1行
-    {{56, 125}, {129, 125}, {202, 125}, {275, 125}, {348, 125}, {421, 125}, {494, 125}, {567, 125}, {604, 125}},
-    // 第2行
-    {{56, 198}, {129, 198}, {202, 198}, {275, 198}, {348, 198}, {421, 198}, {494, 198}, {567, 198}, {604, 198}},
-    // 第3行
-    {{56, 271}, {129, 271}, {202, 271}, {275, 271}, {348, 271}, {421, 271}, {494, 271}, {567, 271}, {604, 271}},
-    // 第4行
-    {{56, 344}, {129, 344}, {202, 344}, {275, 344}, {348, 344}, {421, 344}, {494, 344}, {567, 344}, {604, 344}},
-    // 第5行（楚河汉界）
-    {{56, 417}, {129, 417}, {202, 417}, {275, 417}, {348, 417}, {421, 417}, {494, 417}, {567, 417}, {604, 417}},
-    // 第6行
-    {{56, 490}, {129, 490}, {202, 490}, {275, 490}, {348, 490}, {421, 490}, {494, 490}, {567, 490}, {604, 490}},
-    // 第7行
-    {{56, 563}, {129, 563}, {202, 563}, {275, 563}, {348, 563}, {421, 563}, {494, 563}, {567, 563}, {604, 563}},
-    // 第8行
-    {{56, 636}, {129, 636}, {202, 636}, {275, 636}, {348, 636}, {421, 636}, {494, 636}, {567, 636}, {604, 636}},
-    // 第9行（红方底线）
-    {{56, 676}, {129, 676}, {202, 676}, {275, 676}, {348, 676}, {421, 676}, {494, 676}, {567, 676}, {604, 676}}
+    {NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE},
+    {RED_JU, RED_MA, RED_XIANG, RED_SHI, RED_SHUAI, RED_SHI, RED_XIANG, RED_MA, RED_JU}
 };
 
 // 棋子图片路径 (这个就无需多言,不要动图片和这里的名字保你平安)
@@ -92,19 +74,19 @@ const char* piece_names[] = {
 
 // 加载纹理 [真是白写,毕竟我创建的GUI程序看不到这些]  //注意这些path是只要有图片文件的相对路径就行了,同时以"路径"的格式作为参数传入
 SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* path) {
-    printf("尝试加载图片: %s\n", path);
+    //printf("尝试加载图片: %s\n", path);
     SDL_Surface* surface = IMG_Load(path);
     if (!surface) {
-        printf("无法加载图片: %s, 错误: %s\n", path, IMG_GetError());
+        //printf("无法加载图片: %s, 错误: %s\n", path, IMG_GetError());
         return NULL;
     }
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
     SDL_FreeSurface(surface);
     
     if (!texture) {
-        printf("创建纹理失败: %s\n", path);
+        //printf("创建纹理失败: %s\n", path);
     } else {
-        printf("成功加载图片: %s\n", path);
+        //printf("成功加载图片: %s\n", path);
     }
     return texture;
 }
@@ -120,20 +102,20 @@ bool pointInRect(int x, int y, SDL_Rect rect) {
 int main(int argc, char* argv[]) {//塞一个void试试?
     // 初始化SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
-        printf("SDL初始化失败: %s\n", SDL_GetError());
+        //printf("SDL初始化失败: %s\n", SDL_GetError());
         return -1;
     }
 
     // 初始化SDL_image
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
-        printf("SDL_image初始化失败: %s\n", IMG_GetError());
+        //printf("SDL_image初始化失败: %s\n", IMG_GetError());
         SDL_Quit();
         return -1;
     }
 
     // 初始化SDL_mixer
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-        printf("SDL_mixer初始化失败: %s\n", Mix_GetError());
+        //printf("SDL_mixer初始化失败: %s\n", Mix_GetError());
         IMG_Quit();
         SDL_Quit();
         return -1;
@@ -143,7 +125,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     SDL_Window* window = SDL_CreateWindow("中国象棋", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                           SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window) {//强调一下,这个创建失败是出现一个空指针,NULL在bool上是false的等价.
-        printf("创建窗口失败: %s\n", SDL_GetError());
+        //printf("创建窗口失败: %s\n", SDL_GetError());
         Mix_CloseAudio();
         IMG_Quit();
         SDL_Quit();
@@ -152,7 +134,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) {
-        printf("创建渲染器失败: %s\n", SDL_GetError());
+        //printf("创建渲染器失败: %s\n", SDL_GetError());
         SDL_DestroyWindow(window);
         Mix_CloseAudio();
         IMG_Quit();
@@ -160,49 +142,30 @@ int main(int argc, char* argv[]) {//塞一个void试试?
         return -1;
     }
 
+
+
     // 加载背景音乐
-    printf("尝试加载背景音乐...\n"); //注意,到时候估计打包时这种外部链接资源的路径又要改,先插个眼.
     Mix_Music* bgm = Mix_LoadMUS("res/music/bgm.mp3");
-    if (!bgm) {
-        printf("无法加载背景音乐: %s\n", Mix_GetError());
-        printf("请确保文件 res/music/bgm.mp3 存在\n");
-    } else {
-        // 循环播放背景音乐
+    if (bgm) {
         Mix_PlayMusic(bgm, -1);
-        printf("背景音乐开始播放\n");
     }
 
     // 加载资源
-    printf("加载游戏资源...\n");
     SDL_Texture* background = loadTexture(renderer, "res/images/background.png");
     SDL_Texture* chess_board = loadTexture(renderer, "res/images/chess_board.png");
-    
-    // 尝试多个可能的按钮图片路径(准备多张按钮图片以防万一,但是完全没必要.)
     SDL_Texture* start_button = loadTexture(renderer, "res/images/start_button.png");
-    // if (!start_button) {
-    //     start_button = loadTexture(renderer, "res/images/button.png");
-    // }
-    //失败修补,无所谓了,如果这个崩溃了我们的项目还真是失败
-    if (!start_button) {
-        printf("无法加载按钮图片，将使用默认按钮\n");
-    }
 
     // 加载棋子纹理
     SDL_Texture* pieces[15] = {NULL};
-    printf("开始加载棋子纹理...\n");
     for (int i = 1; i < 15; i++) {
         char path[256];
-        //注意啊,这个snprintf是<stdio.h>里面的,可以直接拼接(哪怕不是字符也能凭借这个拼接)
-        snprintf(path, sizeof(path), "res/images/%s", piece_names[i]);//这样操作之后path变量就变成了"res/images/xxx.png"的格式
+        snprintf(path, sizeof(path), "res/images/%s", piece_names[i]);
         pieces[i] = loadTexture(renderer, path);
-        
-        //AI生成的代码还是太多余了
-        if (!pieces[i]) {
-            printf("!! 失败加载棋子 %d: %s\n", i, piece_names[i]);
-        } else {
-            printf("成功加载棋子 %d: %s\n", i, piece_names[i]);
-        }
     }
+
+    // ====== 新增：加载侧边按钮图标 ======
+    SDL_Texture* return_button = loadTexture(renderer, "res/images/returntomenu.jpg");
+    SDL_Texture* revoke_button = loadTexture(renderer, "res/images/revoke_chess.png");
 
     // 创建开始按钮{这些参数是猜测出来的,请见谅}
     SDL_Rect startButtonRect = {
@@ -211,20 +174,37 @@ int main(int argc, char* argv[]) {//塞一个void试试?
         200, 80
     };
 
-    // 游戏状态{刚开始肯定在菜单}
+    // ====== 新增：创建侧边按钮位置 ======
+    SDL_Rect returnButtonRect = {
+        30,   // 距离左侧30像素
+        100,  // 距离顶部100像素
+        100,  // 宽度
+        100   // 高度
+    };
+
+    SDL_Rect revokeButtonRect = {
+        30,   // 和返回按钮在同一列
+        250,  // 在返回按钮下方150像素（100+100+50间距）
+        159,  // 宽度
+        86    // 高度
+    };
+
+    // 游戏状态
     GameState currentState = MENU_STATE;
     
-    // 棋盘在屏幕上的位置（居中显示）
-    int board_x = (SCREEN_WIDTH - BOARD_DISPLAY_WIDTH) / 2;
-    int board_y = (SCREEN_HEIGHT - BOARD_DISPLAY_HEIGHT) / 2;
-
-    printf("游戏初始化完成，当前状态: %s\n", currentState == MENU_STATE ? "菜单" : "游戏");
-    printf("棋盘位置: x=%d, y=%d, 尺寸: %dx%d\n", board_x, board_y, BOARD_DISPLAY_WIDTH, BOARD_DISPLAY_HEIGHT);
-
-    // 计算缩放比例
-    float scale_x = (float)BOARD_DISPLAY_WIDTH / BOARD_IMG_WIDTH;
-    float scale_y = (float)BOARD_DISPLAY_HEIGHT / BOARD_IMG_HEIGHT;
-    printf("棋盘缩放比例: x=%.2f, y=%.2f\n", scale_x, scale_y);
+    // 显示坐标系信息
+    printf("=== 坐标系设置 ===\n");
+    printf("棋盘显示位置: (%d, %d)\n", BOARD_VISUAL_X, BOARD_VISUAL_Y);
+    printf("棋盘格点原点: (%d, %d)\n", GRID_ORIGIN_X, GRID_ORIGIN_Y);
+    printf("网格间距: %dx%d\n", GRID_WIDTH, GRID_HEIGHT);
+    printf("棋子尺寸: %d\n", PIECE_SIZE);
+    printf("\n关键棋子理论位置:\n");
+    printf("黑车(0,0): 格点(%d,%d)\n", 
+           GRID_ORIGIN_X + 0 * GRID_WIDTH, GRID_ORIGIN_Y + 0 * GRID_HEIGHT);
+    printf("黑将(0,4): 格点(%d,%d)\n", 
+           GRID_ORIGIN_X + 4 * GRID_WIDTH, GRID_ORIGIN_Y + 0 * GRID_HEIGHT);
+    printf("红帅(9,4): 格点(%d,%d)\n", 
+           GRID_ORIGIN_X + 4 * GRID_WIDTH, GRID_ORIGIN_Y + 9 * GRID_HEIGHT);
 
     // 主循环[这里是游戏的本体部分,我们需要在这里实现游戏逻辑] {但是还没有写好,先放着吧,后面再补充}
     bool running = true;
@@ -237,16 +217,27 @@ int main(int argc, char* argv[]) {//塞一个void试试?
             
             // 鼠标点击事件
             if (event.type == SDL_MOUSEBUTTONDOWN) {
-                int mouseX = event.button.x; //你们要是不习惯就用event->button->x好了
+                int mouseX = event.button.x;
                 int mouseY = event.button.y;
-                printf("鼠标点击: (%d, %d)\n", mouseX, mouseY);
-                
+    
                 // 菜单状态下点击开始按钮
                 if (currentState == MENU_STATE && pointInRect(mouseX, mouseY, startButtonRect)) {
                     currentState = GAME_STATE;
-                    printf("开始对弈！切换到游戏界面\n");
-                } else if (currentState == MENU_STATE) {
-                    printf("点击位置不在按钮范围内\n");
+                }
+
+                // ====== 新增：游戏状态下点击侧边按钮 ======
+                if (currentState == GAME_STATE) {
+                    // 检查"回到菜单"按钮
+                    if (pointInRect(mouseX, mouseY, returnButtonRect)) {
+                        printf("回到菜单\n");
+                     currentState = MENU_STATE;
+                 }
+        
+                    // 检查"悔棋"按钮
+                    if (pointInRect(mouseX, mouseY, revokeButtonRect)) {
+                        printf("悔棋\n");
+                        // 这里需要实现悔棋功能
+                    }
                 }
             }
             
@@ -254,7 +245,6 @@ int main(int argc, char* argv[]) {//塞一个void试试?
             if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
                 if (currentState == GAME_STATE) {
                     currentState = MENU_STATE;
-                    printf("返回菜单\n");
                 }
             }
         }
@@ -290,44 +280,53 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                 SDL_RenderClear(renderer);
             }
             
+            // 渲染棋盘（使用棋盘显示位置）
             if (chess_board) {
-                SDL_Rect boardRect = { board_x, board_y, BOARD_DISPLAY_WIDTH, BOARD_DISPLAY_HEIGHT };
+                SDL_Rect boardRect = { 
+                    BOARD_VISUAL_X, 
+                    BOARD_VISUAL_Y,
+                    BOARD_DISPLAY_WIDTH, 
+                    BOARD_DISPLAY_HEIGHT 
+                };
                 SDL_RenderCopy(renderer, chess_board, NULL, &boardRect);
             } else {
                 // 如果没有棋盘图片，绘制简单棋盘(总感觉这是特么多余的)
                 SDL_SetRenderDrawColor(renderer, 210, 180, 140, 255);
-                SDL_Rect boardRect = { board_x, board_y, BOARD_DISPLAY_WIDTH, BOARD_DISPLAY_HEIGHT };
+                SDL_Rect boardRect = { 
+                    BOARD_VISUAL_X, 
+                    BOARD_VISUAL_Y, 
+                    BOARD_DISPLAY_WIDTH, 
+                    BOARD_DISPLAY_HEIGHT 
+                };
                 SDL_RenderFillRect(renderer, &boardRect);
             }
             
-            // 绘制棋子 - 使用精确的位置计算{好了关键点来了,发生了错位.}
-            printf("绘制棋子...\n");
+            // 绘制棋子 - 使用独立的格点坐标系
             int pieceCount = 0;
-            for (int row = 0; row < 10; row++) {
-                for (int col = 0; col < 9; col++) {
-                    PieceType piece = board[row][col];
+            for (int x = 0; x < 10; x++) {      // 行 (x: 0-9)
+                for (int y = 0; y < 9; y++) {   // 列 (y: 0-8)
+                    PieceType piece = board[x][y];
                     if (piece != NONE) {
                         pieceCount++;
                         
                         if (pieces[piece]) {
-                            // 获取棋盘交叉点在原始图片中的位置
-                            BoardPosition pos = boardPositions[row][col];
-                            
-                            // 计算在屏幕上的位置（考虑缩放）
-                            int screen_x = board_x + (int)(pos.x * scale_x) - PIECE_SIZE/2;
-                            int screen_y = board_y + (int)(pos.y * scale_y) - PIECE_SIZE/2;
+                            // 使用格点坐标系计算棋子位置（与棋盘显示位置无关）
+                            int screen_x = GRID_ORIGIN_X + y * GRID_WIDTH - PIECE_SIZE/2;
+                            int screen_y = GRID_ORIGIN_Y + x * GRID_HEIGHT - PIECE_SIZE/2;
                             
                             SDL_Rect dest = {screen_x, screen_y, PIECE_SIZE, PIECE_SIZE};
                             SDL_RenderCopy(renderer, pieces[piece], NULL, &dest);
                             
-                            printf("绘制棋子: type=%d, 棋盘位置=(%d,%d), 屏幕位置=(%d,%d)\n", 
-                                   piece, row, col, screen_x, screen_y);
+                            // 调试输出关键棋子位置
+                            if ((x == 0 && y == 0) || (x == 0 && y == 4) || 
+                                (x == 9 && y == 4) || (x == 9 && y == 0)) {
+                                printf("棋子(%d,%d): 屏幕(%d,%d), 类型=%d\n", 
+                                       x, y, screen_x, screen_y, piece);
+                            }
                         } else {
-                            printf("!! 棋子纹理为空: type=%d, 位置=(%d,%d)\n", piece, row, col);
-                            // 绘制占位矩形
-                            BoardPosition pos = boardPositions[row][col];
-                            int screen_x = board_x + (int)(pos.x * scale_x) - PIECE_SIZE/2;
-                            int screen_y = board_y + (int)(pos.y * scale_y) - PIECE_SIZE/2;
+                            // 棋子纹理加载失败，绘制占位矩形
+                            int screen_x = GRID_ORIGIN_X + y * GRID_WIDTH - PIECE_SIZE/2;
+                            int screen_y = GRID_ORIGIN_Y + x * GRID_HEIGHT - PIECE_SIZE/2;
                             SDL_Rect dest = {screen_x, screen_y, PIECE_SIZE, PIECE_SIZE};
                             SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
                             SDL_RenderFillRect(renderer, &dest);
@@ -335,7 +334,33 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                     }
                 }
             }
-            printf("总共绘制了 %d 个棋子\n", pieceCount);
+            //printf("总共绘制了 %d 个棋子\n", pieceCount);
+
+            // =============== 侧边按钮渲染代码 ===============
+            // 渲染"回到菜单"按钮
+            if (return_button) {
+                SDL_RenderCopy(renderer, return_button, NULL, &returnButtonRect);
+            } else {
+                // 如果图标加载失败，绘制默认按钮
+                SDL_SetRenderDrawColor(renderer, 200, 50, 50, 255);
+                SDL_RenderFillRect(renderer, &returnButtonRect);
+                // 绘制边框
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                SDL_RenderDrawRect(renderer, &returnButtonRect);
+            }
+            
+            // 渲染"悔棋"按钮
+            if (revoke_button) {
+                SDL_RenderCopy(renderer, revoke_button, NULL, &revokeButtonRect);
+            } else {
+                // 如果图标加载失败，绘制默认按钮
+                SDL_SetRenderDrawColor(renderer, 50, 50, 200, 255);
+                SDL_RenderFillRect(renderer, &revokeButtonRect);
+                // 绘制边框
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                SDL_RenderDrawRect(renderer, &revokeButtonRect);
+            }
+            // =============== 插入结束 ===============
         }
 
         // 呈现画面
@@ -344,7 +369,8 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     }
 
     // 清理资源,这些都没有什么好讲的,总之就是清理我创建的窗口了{不然你就要手动杀进程//否则内存泄露//大家玩完}
-    printf("清理资源...\n");
+    //printf("清理资源...\n");
+
     if (bgm) {
         Mix_HaltMusic();
         Mix_FreeMusic(bgm);
@@ -356,6 +382,10 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     if (background) SDL_DestroyTexture(background);
     if (chess_board) SDL_DestroyTexture(chess_board);
     if (start_button) SDL_DestroyTexture(start_button);
+
+    // ====== 新增：清理侧边按钮纹理 ======
+    if (return_button) SDL_DestroyTexture(return_button);
+    if (revoke_button) SDL_DestroyTexture(revoke_button);
     
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
