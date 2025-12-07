@@ -1,5 +1,5 @@
 //注意,到时候估计打包时外部链接资源(图片,音乐等)的路径又要改,先插个眼.
-
+//要把这个文件和res文件放到同一个目录下 --luo
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,19 +74,19 @@ const char* piece_names[] = {
 
 // 加载纹理 [真是白写,毕竟我创建的GUI程序看不到这些]  //注意这些path是只要有图片文件的相对路径就行了,同时以"路径"的格式作为参数传入
 SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* path) {
-    //printf("尝试加载图片: %s\n", path);
+    printf("尝试加载图片: %s\n", path);
     SDL_Surface* surface = IMG_Load(path);
     if (!surface) {
-        //printf("无法加载图片: %s, 错误: %s\n", path, IMG_GetError());
+        printf("无法加载图片: %s, 错误: %s\n", path, IMG_GetError());
         return NULL;
     }
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
     SDL_FreeSurface(surface);
     
     if (!texture) {
-        //printf("创建纹理失败: %s\n", path);
+        printf("创建纹理失败: %s\n", path);
     } else {
-        //printf("成功加载图片: %s\n", path);
+        printf("成功加载图片: %s\n", path);
     }
     return texture;
 }
@@ -99,23 +99,24 @@ bool pointInRect(int x, int y, SDL_Rect rect) {
 
 //咳咳,然后这里这部分,考虑之后改变到game.c中,因为这里的东西太多了,而且还没有完全搞懂,所以先放这里吧,后面再整理.
 // 主函数
+#undef main
 int main(int argc, char* argv[]) {//塞一个void试试?
     // 初始化SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
-        //printf("SDL初始化失败: %s\n", SDL_GetError());
+        printf("SDL初始化失败: %s\n", SDL_GetError());
         return -1;
     }
 
     // 初始化SDL_image
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
-        //printf("SDL_image初始化失败: %s\n", IMG_GetError());
+        printf("SDL_image初始化失败: %s\n", IMG_GetError());
         SDL_Quit();
         return -1;
     }
 
     // 初始化SDL_mixer
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-        //printf("SDL_mixer初始化失败: %s\n", Mix_GetError());
+        printf("SDL_mixer初始化失败: %s\n", Mix_GetError());
         IMG_Quit();
         SDL_Quit();
         return -1;
@@ -125,7 +126,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     SDL_Window* window = SDL_CreateWindow("中国象棋", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                           SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window) {//强调一下,这个创建失败是出现一个空指针,NULL在bool上是false的等价.
-        //printf("创建窗口失败: %s\n", SDL_GetError());
+        printf("创建窗口失败: %s\n", SDL_GetError());
         Mix_CloseAudio();
         IMG_Quit();
         SDL_Quit();
@@ -134,7 +135,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) {
-        //printf("创建渲染器失败: %s\n", SDL_GetError());
+        printf("创建渲染器失败: %s\n", SDL_GetError());
         SDL_DestroyWindow(window);
         Mix_CloseAudio();
         IMG_Quit();
@@ -164,7 +165,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     }
 
     // ====== 新增：加载侧边按钮图标 ======
-    SDL_Texture* return_button = loadTexture(renderer, "res/images/returntomenu.jpg");
+    SDL_Texture* return_button = loadTexture(renderer, "res/images/return_to_menu.png");
     SDL_Texture* revoke_button = loadTexture(renderer, "res/images/revoke_chess.png");
 
     // 创建开始按钮{这些参数是猜测出来的,请见谅}
