@@ -1,5 +1,6 @@
 //注意,到时候估计打包时外部链接资源(图片,音乐等)的路径又要改,先插个眼.
 //要把这个文件和res文件放到同一个目录下 --luo
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,11 +8,11 @@
 #include <stdint.h>
 #include <assert.h>
 #include <ctype.h>
-#include <SDL.h>
+#include <SDL2/SDL.h>
 //#include <SDL_main.h> //总之在目前的开发中不需要就是了
-#include <SDL_image.h>
-#include <SDL_mixer.h>
-#include <SDL_ttf.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_ttf.h>
 
 // 屏幕尺寸[由于不确定究竟是怎么样的,这里存疑]
 #define SCREEN_WIDTH  1200
@@ -43,16 +44,42 @@ typedef enum {
     GAME_STATE
 } GameState;
 
-// 棋子类型
-typedef enum {
-    NONE = 0,
-    RED_SHUAI, RED_JU, RED_MA, RED_PAO, RED_SHI, RED_XIANG, RED_BING,
-    BLACK_JIANG, BLACK_JU, BLACK_MA, BLACK_PAO, BLACK_SHI, BLACK_XIANG, BLACK_ZU
-} PieceType;
+// ====== 新的棋子编码定义 ======
+#define COLOR_RED    1  // 红方颜色代码
+#define COLOR_BLACK  2  // 黑方颜色代码
+
+// 棋子类型定义
+#define TYPE_JIANG   1  // 将/帅
+#define TYPE_SHI     2  // 士/仕
+#define TYPE_XIANG   3  // 象/相
+#define TYPE_MA      4  // 马
+#define TYPE_JU      5  // 车
+#define TYPE_PAO     6  // 炮
+#define TYPE_BING    7  // 兵/卒
+
+// 红方棋子编码（颜色代码1 + 棋子类型）
+#define RED_SHUAI    11  // 红帅
+#define RED_SHI      12  // 红士
+#define RED_XIANG    13  // 红相
+#define RED_MA       14  // 红马
+#define RED_JU       15  // 红车
+#define RED_PAO      16  // 红炮
+#define RED_BING     17  // 红兵
+
+// 黑方棋子编码（颜色代码2 + 棋子类型）
+#define BLACK_JIANG  21  // 黑将
+#define BLACK_SHI    22  // 黑仕
+#define BLACK_XIANG  23  // 黑象
+#define BLACK_MA     24  // 黑马
+#define BLACK_JU     25  // 黑车
+#define BLACK_PAO    26  // 黑炮
+#define BLACK_ZU     27  // 黑卒
+
+#define NONE         0  // 无棋子
 
 // 棋盘布局  我想这总不会再搞错了
 // 我也觉得-lin
-PieceType board[10][9] = {
+int board[10][9] = {
     {BLACK_JU, BLACK_MA, BLACK_XIANG, BLACK_SHI, BLACK_JIANG, BLACK_SHI, BLACK_XIANG, BLACK_MA, BLACK_JU},
     {NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE},
     {NONE, BLACK_PAO, NONE, NONE, NONE, NONE, NONE, BLACK_PAO, NONE},
@@ -65,28 +92,42 @@ PieceType board[10][9] = {
     {RED_JU, RED_MA, RED_XIANG, RED_SHI, RED_SHUAI, RED_SHI, RED_XIANG, RED_MA, RED_JU}
 };
 
-// 棋子图片路径 (这个就无需多言,不要动图片和这里的名字保你平安)
-const char* piece_names[] = {
-    "none",//这个是加载失败的情况,当然实验后认为不需要这个了,但是保留
-    "red_shuai.png", "red_ju.png", "red_ma.png", "red_pao.png", "red_shi.png", "red_xiang.png", "red_bing.png",
-    "black_jiang.png", "black_ju.png", "black_ma.png", "black_pao.png", "black_shi.png", "black_xiang.png", "black_zu.png"
+// 棋子图片路径 (注意：索引需要对应新的编码)
+const char* piece_names[28] = {
+    "none", // 索引0（NONE）
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // 索引1-10
+    "red_shuai.png",    // 索引11（RED_SHUAI）
+    "red_shi.png",      // 索引12（RED_SHI）
+    "red_xiang.png",    // 索引13（RED_XIANG）
+    "red_ma.png",       // 索引14（RED_MA）
+    "red_ju.png",       // 索引15（RED_JU）
+    "red_pao.png",      // 索引16（RED_PAO）
+    "red_bing.png",     // 索引17（RED_BING）
+    NULL, NULL, NULL,   // 索引18-20
+    "black_jiang.png",  // 索引21（BLACK_JIANG）
+    "black_shi.png",    // 索引22（BLACK_SHI）
+    "black_xiang.png",  // 索引23（BLACK_XIANG）
+    "black_ma.png",     // 索引24（BLACK_MA）
+    "black_ju.png",     // 索引25（BLACK_JU）
+    "black_pao.png",    // 索引26（BLACK_PAO）
+    "black_zu.png"      // 索引27（BLACK_ZU）
 };
 
 // 加载纹理 [真是白写,毕竟我创建的GUI程序看不到这些]  //注意这些path是只要有图片文件的相对路径就行了,同时以"路径"的格式作为参数传入
 SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* path) {
-    printf("尝试加载图片: %s\n", path);
+    //printf("尝试加载图片: %s\n", path);
     SDL_Surface* surface = IMG_Load(path);
     if (!surface) {
-        printf("无法加载图片: %s, 错误: %s\n", path, IMG_GetError());
+        //printf("无法加载图片: %s, 错误: %s\n", path, IMG_GetError());
         return NULL;
     }
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
     SDL_FreeSurface(surface);
     
     if (!texture) {
-        printf("创建纹理失败: %s\n", path);
+        //printf("创建纹理失败: %s\n", path);
     } else {
-        printf("成功加载图片: %s\n", path);
+        //printf("成功加载图片: %s\n", path);
     }
     return texture;
 }
@@ -96,27 +137,38 @@ bool pointInRect(int x, int y, SDL_Rect rect) {
     return (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h);
 }
 
+// 辅助函数：获取棋子颜色
+int getPieceColor(int piece) {
+    if (piece == NONE) return 0;
+    return piece / 10;
+}
+
+// 辅助函数：获取棋子类型
+int getPieceType(int piece) {
+    if (piece == NONE) return 0;
+    return piece % 10;
+}
+
 
 //咳咳,然后这里这部分,考虑之后改变到game.c中,因为这里的东西太多了,而且还没有完全搞懂,所以先放这里吧,后面再整理.
 // 主函数
-#undef main
 int main(int argc, char* argv[]) {//塞一个void试试?
     // 初始化SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
-        printf("SDL初始化失败: %s\n", SDL_GetError());
+        //printf("SDL初始化失败: %s\n", SDL_GetError());
         return -1;
     }
 
     // 初始化SDL_image
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
-        printf("SDL_image初始化失败: %s\n", IMG_GetError());
+        //printf("SDL_image初始化失败: %s\n", IMG_GetError());
         SDL_Quit();
         return -1;
     }
 
     // 初始化SDL_mixer
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-        printf("SDL_mixer初始化失败: %s\n", Mix_GetError());
+        //printf("SDL_mixer初始化失败: %s\n", Mix_GetError());
         IMG_Quit();
         SDL_Quit();
         return -1;
@@ -126,7 +178,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     SDL_Window* window = SDL_CreateWindow("中国象棋", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                           SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window) {//强调一下,这个创建失败是出现一个空指针,NULL在bool上是false的等价.
-        printf("创建窗口失败: %s\n", SDL_GetError());
+        //printf("创建窗口失败: %s\n", SDL_GetError());
         Mix_CloseAudio();
         IMG_Quit();
         SDL_Quit();
@@ -135,7 +187,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) {
-        printf("创建渲染器失败: %s\n", SDL_GetError());
+        //printf("创建渲染器失败: %s\n", SDL_GetError());
         SDL_DestroyWindow(window);
         Mix_CloseAudio();
         IMG_Quit();
@@ -156,16 +208,18 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     SDL_Texture* chess_board = loadTexture(renderer, "res/images/chess_board.png");
     SDL_Texture* start_button = loadTexture(renderer, "res/images/start_button.png");
 
-    // 加载棋子纹理
-    SDL_Texture* pieces[15] = {NULL};
-    for (int i = 1; i < 15; i++) {
-        char path[256];
-        snprintf(path, sizeof(path), "res/images/%s", piece_names[i]);
-        pieces[i] = loadTexture(renderer, path);
+    // 加载棋子纹理（使用新编码索引）
+    SDL_Texture* pieces[28] = {NULL};
+    for (int i = 11; i <= 27; i++) {
+        if (piece_names[i] != NULL) {  // 只加载有对应图片的编码
+            char path[256];
+            snprintf(path, sizeof(path), "../res/images/%s", piece_names[i]);
+            pieces[i] = loadTexture(renderer, path);
+        }
     }
 
     // ====== 新增：加载侧边按钮图标 ======
-    SDL_Texture* return_button = loadTexture(renderer, "res/images/return_to_menu.png");
+    SDL_Texture* return_button = loadTexture(renderer, "res/images/return_to_menu.jpg");
     SDL_Texture* revoke_button = loadTexture(renderer, "res/images/revoke_chess.png");
 
     // 创建开始按钮{这些参数是猜测出来的,请见谅}
@@ -306,11 +360,11 @@ int main(int argc, char* argv[]) {//塞一个void试试?
             int pieceCount = 0;
             for (int x = 0; x < 10; x++) {      // 行 (x: 0-9)
                 for (int y = 0; y < 9; y++) {   // 列 (y: 0-8)
-                    PieceType piece = board[x][y];
+                    int piece = board[x][y];
                     if (piece != NONE) {
                         pieceCount++;
                         
-                        if (pieces[piece]) {
+                        if (piece >= 11 && piece <= 27 && pieces[piece]) {
                             // 使用格点坐标系计算棋子位置（与棋盘显示位置无关）
                             int screen_x = GRID_ORIGIN_X + y * GRID_WIDTH - PIECE_SIZE/2;
                             int screen_y = GRID_ORIGIN_Y + x * GRID_HEIGHT - PIECE_SIZE/2;
@@ -377,7 +431,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
         Mix_FreeMusic(bgm);
     }
     
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < 28; i++) {
         if (pieces[i]) SDL_DestroyTexture(pieces[i]);
     }
     if (background) SDL_DestroyTexture(background);
