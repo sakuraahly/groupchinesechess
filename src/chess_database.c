@@ -245,3 +245,98 @@ void generateNotation(ChessMove* move, int from_x, int from_y, int to_x, int to_
     snprintf(move->notation, sizeof(move->notation), "%c%d%d-%d%d", 
              piece_char, from_x, from_y, to_x, to_y);
 }
+
+// ==================== 存档系统 ====================
+
+// 检查存档是否存在
+bool has_save() {
+    FILE* file = fopen(SAVE_FILE, "rb");
+    if (file) {
+        fclose(file);
+        return true;
+    }
+    return false;
+}
+
+// 保存当前游戏（覆盖保存）
+void save_game() {
+    FILE* file = fopen(SAVE_FILE, "wb");
+    if (!file) {
+        printf("保存失败：无法创建存档文件\n");
+        return;
+    }
+    
+    // 保存最重要的4部分数据：
+    
+    // 1. 保存棋盘状态（10行×9列）
+    fwrite(board, sizeof(int), 10 * 9, file);
+    
+    // 2. 保存游戏记录
+    fwrite(&current_game, sizeof(GameRecord), 1, file);
+    
+    // 3. 保存游戏状态
+    fwrite(&is_red_turn, sizeof(bool), 1, file);
+    fwrite(&move_step, sizeof(int), 1, file);
+    
+    // 4. 保存棋子选择状态（用于恢复选中状态）
+    fwrite(&is_piece_selected, sizeof(bool), 1, file);
+    fwrite(&selected_x, sizeof(int), 1, file);
+    fwrite(&selected_y, sizeof(int), 1, file);
+    fwrite(&selected_piece, sizeof(int), 1, file);
+    
+    fclose(file);
+    
+    // 简单提示（控制台输出）
+    printf("游戏已保存\n");
+    printf("步数：%d，轮到：%s\n", 
+           current_game.move_count, 
+           is_red_turn ? "红方" : "黑方");
+}
+
+// 加载存档
+bool load_game() {
+    FILE* file = fopen(SAVE_FILE, "rb");
+    if (!file) {
+        printf("没有找到存档文件\n");
+        return false;
+    }
+    
+    printf("正在加载存档...\n");
+    
+    // 按保存时的顺序读取数据：
+    
+    // 1. 读取棋盘状态
+    if (fread(board, sizeof(int), 10 * 9, file) != 10 * 9) {
+        printf("加载失败：棋盘数据损坏\n");
+        fclose(file);
+        return false;
+    }
+    
+    // 2. 读取游戏记录
+    if (fread(&current_game, sizeof(GameRecord), 1, file) != 1) {
+        printf("加载失败：游戏记录损坏\n");
+        fclose(file);
+        return false;
+    }
+    
+    // 3. 读取游戏状态
+    fread(&is_red_turn, sizeof(bool), 1, file);
+    fread(&move_step, sizeof(int), 1, file);
+    
+    // 4. 读取棋子选择状态
+    fread(&is_piece_selected, sizeof(bool), 1, file);
+    fread(&selected_x, sizeof(int), 1, file);
+    fread(&selected_y, sizeof(int), 1, file);
+    fread(&selected_piece, sizeof(int), 1, file);
+    
+    fclose(file);
+    
+    // 显示加载信息
+    printf("存档加载成功！\n");
+    printf("对局：%s vs %s\n", 
+           current_game.player_red, current_game.player_black);
+    printf("已走：%d 步\n", current_game.move_count);
+    printf("轮到：%s\n", is_red_turn ? "红方" : "黑方");
+    
+    return true;
+}
