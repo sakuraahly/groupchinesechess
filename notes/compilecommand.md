@@ -7,5 +7,7 @@ gcc -IC:/msys64/mingw64/include/SDL2 -LC:/msys64/mingw64/lib -o ./output/game.ex
 //这个命令输出的是 game.exe 这个文件输出到output文件夹
 
 新的编译命令(用于displayinterface.c)
-//gcc -IC:/msys64/mingw64/include/SDL2 -LC:/msys64/mingw64/lib -o ./output/game.exe ./src/displayinterface.c -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_mixer -mwindows
+//gcc -IC:/msys64/mingw64/include/SDL2 -I./src -LC:/msys64/mingw64/lib -o ./output/game.exe ./src/chess_database.c ./src/displayinterface.c -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_mixer -mwindows
 
+用于游戏文件game.c的编译命令:
+//gcc -IC:/msys64/mingw64/include/SDL2 -I./src/include -LC:/msys64/mingw64/lib -o ./output/game.exe ./src/game.c ./src/displayinterface.c  ./src/chess_database.c ./src/chess_move.c -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_mixer -mwindows

@@ -1,11 +1,13 @@
+#pragma once
 #ifndef CHESS_DATABASE_H
 #define CHESS_DATABASE_H
 
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdbool.h>
 
-#pragma once
+#include "chess_move.h"
 
 // ==================== 棋子编码系统 ====================
 #define COLOR_RED    1  // 红方颜色代码
@@ -41,6 +43,17 @@
 // ==================== 棋盘常量 ====================
 #define BOARD_ROWS    10  // 棋盘行数
 #define BOARD_COLS    9   // 棋盘列数
+
+#define NONE          0  // 空位置
+
+
+
+// 棋子选择状态
+extern bool is_piece_selected ;
+extern int selected_x ;
+extern int selected_y ;
+extern int selected_piece ;
+
 
 // ==================== 数据结构 ====================
 // 棋步结构体：记录每一步棋的详细信息
@@ -93,5 +106,15 @@ void set_game_result(GameRecord* game, int result);
 void print_game_summary(const GameRecord* game);
 void save_game_to_file(const GameRecord* game, const char* filename);
 void get_current_timestamp(char* buffer, int size);
+
+//生成记谱法
+void generateNotation(ChessMove* move, int from_x, int from_y, int to_x, int to_y, int piece_code);
+
+
+extern GameRecord current_game;        // 当前棋局记录
+extern ChessMove current_move;         // 当前棋步记录
+extern bool is_red_turn ;        // 当前轮到红方走棋
+extern int move_step ;              // 当前步数计数器
+extern time_t move_start_time ;     // 当前步开始时间
 
 #endif

@@ -1,7 +1,23 @@
 #include "chess_database.h"
+#include "chess_move.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdbool.h>
+
+#define NONE 0
+
+ GameRecord current_game;        // 当前棋局记录
+ ChessMove current_move;         // 当前棋步记录
+ bool is_red_turn = true;        // 当前轮到红方走棋
+ int move_step = 1;              // 当前步数计数器
+ time_t move_start_time = 0;     // 当前步开始时间
+
+// 棋子选择状态
+ bool is_piece_selected = false;
+ int selected_x = -1;
+ int selected_y = -1;
+ int selected_piece = NONE;
 
 // 将颜色和棋子类型编码为一个整数
 // 编码规则：颜色 * 10 + 棋子类型
@@ -204,4 +220,28 @@ void get_current_timestamp(char* buffer, int size) {
     time_t now = time(NULL);
     struct tm* timeinfo = localtime(&now);
     strftime(buffer, size, "%Y-%m-%d %H:%M:%S", timeinfo);
+}
+
+// 生成记谱法字符串
+void generateNotation(ChessMove* move, int from_x, int from_y, int to_x, int to_y, int piece_code) {
+    // 简化的记谱法：只记录移动
+    // 实际象棋记谱法更复杂，这里做简化
+    int piece_type = getPieceType(piece_code);
+    char piece_char;
+    
+    switch(piece_type) {
+        case TYPE_JIANG: piece_char = 'K'; break;  // King
+        case TYPE_SHI:   piece_char = 'A'; break;  // Advisor
+        case TYPE_XIANG: piece_char = 'B'; break;  // Bishop
+        case TYPE_MA:    piece_char = 'N'; break;  // kNight
+        case TYPE_JU:    piece_char = 'R'; break;  // Rook
+        case TYPE_PAO:   piece_char = 'C'; break;  // Cannon
+        case TYPE_BING:  piece_char = 'P'; break;  // Pawn
+        default:         piece_char = '?'; break;
+    }
+    
+    // 坐标转换：象棋通常用数字1-9表示列，汉字表示行
+    // 这里简化为行列数字
+    snprintf(move->notation, sizeof(move->notation), "%c%d%d-%d%d", 
+             piece_char, from_x, from_y, to_x, to_y);
 }
