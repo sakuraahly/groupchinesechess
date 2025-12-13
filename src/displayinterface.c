@@ -568,6 +568,8 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     SDL_Texture* revoke_button = loadTexture(renderer, "res/images/revoke_chess.png");
     // 新增保存按钮
     SDL_Texture* save_button = loadTexture(renderer, "res/images/save_button.png");
+    // 新增"撤销悔棋"按钮
+    SDL_Texture* redo_button = loadTexture(renderer, "res/images/redo_button.png");
 
     // 创建开始按钮
     SDL_Rect startButtonRect = {
@@ -595,6 +597,14 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     SDL_Rect saveButtonRect = {
         30,   // 和悔棋按钮在同一列
         400,  // 在悔棋按钮下方
+        100,  // 宽度
+        50    // 高度
+    };
+
+    // ====== 新增："撤销悔棋"按钮位置 ======
+    SDL_Rect redoButtonRect = {
+        30,   // 和保存按钮在同一列
+        480,  // 在保存按钮下方（400+50+30间距）
         100,  // 宽度
         50    // 高度
     };
@@ -659,6 +669,13 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                         printf("保存棋局\n");
                         save_game_to_file(&current_game, "chess_game_record.txt");
                     }
+
+                    // ====== 新增：检查"撤销悔棋"按钮 ======
+                    if (pointInRect(mouseX, mouseY, redoButtonRect)) {
+                        printf("撤销悔棋\n");
+                        // TODO: 这里将来实现撤销悔棋功能
+                        // redoLastMove();
+                    }
                     
                     // 检查是否点击了棋盘
                     int board_x, board_y;
@@ -687,6 +704,15 @@ int main(int argc, char* argv[]) {//塞一个void试试?
             if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
                 if (currentState == GAME_STATE) {
                     revokeLastMove();
+                }
+            }
+
+            // ====== 新增：按D键撤销悔棋 ======
+            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_d) {
+                if (currentState == GAME_STATE) {
+                    printf("撤销悔棋 (快捷键D)\n");
+                    // TODO: 这里将来实现撤销悔棋功能
+                    // redoLastMove();
                 }
             }
         }
@@ -815,6 +841,18 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                 SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
                 SDL_RenderDrawRect(renderer, &saveButtonRect);
             }
+
+            // ====== 新增：渲染"撤销悔棋"按钮 ======
+            if (redo_button) {
+                SDL_RenderCopy(renderer, redo_button, NULL, &redoButtonRect);
+            } else {
+                // 如果图标加载失败，绘制默认按钮
+                SDL_SetRenderDrawColor(renderer, 200, 150, 50, 255);  // 橙色
+                SDL_RenderFillRect(renderer, &redoButtonRect);
+                // 绘制边框
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                SDL_RenderDrawRect(renderer, &redoButtonRect);
+            }
         }
 
         // 呈现画面
@@ -841,6 +879,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     if (return_button) SDL_DestroyTexture(return_button);
     if (revoke_button) SDL_DestroyTexture(revoke_button);
     if (save_button) SDL_DestroyTexture(save_button);
+    if (redo_button) SDL_DestroyTexture(redo_button);
     
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
