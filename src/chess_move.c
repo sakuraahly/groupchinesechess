@@ -216,6 +216,9 @@ bool movePiece(int from_x, int from_y, int to_x, int to_y) {
     // 执行移动
     board[to_x][to_y] = piece;
     board[from_x][from_y] = NONE;
+    Mix_Music* eat = Mix_LoadMUS("res/music/eat.mp3");
+    Mix_PlayMusic(eat, 0);
+    is_music_playing = false;
     
     // 生成记谱法
     generateNotation(&current_move, from_x, from_y, to_x, to_y, piece);
@@ -292,6 +295,8 @@ void handleBoardClick(int board_x, int board_y) {
         
         // 选择棋子
         is_piece_selected = true;
+        Mix_Music* choseChess = Mix_LoadMUS("res/music/chose.mp3");
+        Mix_PlayMusic(choseChess, 0);
         selected_x = board_x;
         selected_y = board_y;
         selected_piece = clicked_piece;

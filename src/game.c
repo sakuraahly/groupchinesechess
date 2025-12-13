@@ -17,8 +17,9 @@
 #include "chess_database.h"
 #include "displayinterface.h"
 
-
 int main(int argc, char* argv[]) {//塞一个void试试?
+
+
     // 初始化SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         //printf("SDL初始化失败: %s\n", SDL_GetError());
@@ -61,11 +62,19 @@ int main(int argc, char* argv[]) {//塞一个void试试?
         return -1;
     }
 
-    // 加载背景音乐
-    Mix_Music* bgm = Mix_LoadMUS("res/music/bgm.mp3");
+     is_music_playing = false;
+    // 加载背景音乐(以及状态判定)
+    // Mix_Music* bgm = Mix_LoadMUS("res/music/bgm.mp3");
+    init_music();
+
     if (bgm) {
         Mix_PlayMusic(bgm, -1);
+        is_music_playing = true;
     }
+    
+    //加载别的音频以及对应的状态
+    // Mix_Music* choseChess = Mix_LoadMUS("res/music/chose.mp3");
+    // static bool shouldPlayChoseChess = false;//这个的音频控制在chess_move.c中,is_piece_selected这个函数里面
 
     // 加载资源
     SDL_Texture* background = loadTexture(renderer, "res/images/background.png");
@@ -149,7 +158,16 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     bool running = true;
     while (running) {
         SDL_Event event;
+
+         //下面是事件处理循环.
         while (SDL_PollEvent(&event)) {
+
+            //处理背景音乐的问题
+          if(is_music_playing == false){
+            is_music_playing = true;
+            Mix_PlayMusic(bgm, 0);
+          }
+            
             if (event.type == SDL_QUIT) {
                 running = false;
             }
@@ -165,7 +183,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                     // 初始化棋局记录
                     init_game_record(&current_game, "GAME001", "红方玩家", "黑方玩家");
                     move_start_time = time(NULL);
-                    printf("新游戏开始！红方先走。\n");
+                    //printf("新游戏开始！红方先走。\n");
                 }
 
                 // 游戏状态下点击
@@ -196,10 +214,11 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                         // redoLastMove();
                     }
                     
-                    // 检查是否点击了棋盘
+                    // 检查是否点击了棋盘上的棋子
                     int board_x, board_y;
                     if (screenToBoard(mouseX, mouseY, &board_x, &board_y)) {
                         handleBoardClick(board_x, board_y);
+                         
                     }
                 }
             }
@@ -234,8 +253,12 @@ int main(int argc, char* argv[]) {//塞一个void试试?
         //             // redoLastMove();
         //         }
         //     }
-         }//while循环的大括号
+         }//内层事件处理的while循环的大括号
 
+
+
+
+        //下面就是渲染部分!
         // 清屏
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
@@ -318,6 +341,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
             // 绘制选中指示器
             drawSelectedIndicator(renderer);
             
+            
             // 绘制当前玩家指示器
             drawCurrentPlayerIndicator(renderer);
             
@@ -378,6 +402,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
     }
+
 
     // 清理资源
     //printf("清理资源...\n");

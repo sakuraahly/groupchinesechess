@@ -24,6 +24,9 @@
 extern const char* piece_names[28]; //棋子图片路径数组
 extern  int board[10][9]; //棋盘数组
 
+extern bool is_music_playing;//背景音乐的判定
+extern Mix_Music* bgm;
+
 
 
 // 屏幕尺寸[由于不确定究竟是怎么样的,这里存疑]
@@ -58,6 +61,10 @@ typedef enum {
 
 // ====== 棋子编码定义（已在chess_database.h中定义） ======
 #define NONE         0  // 无棋子
+
+//音频函数声明
+void init_music();
+
 
 //函数声明
 SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* path);

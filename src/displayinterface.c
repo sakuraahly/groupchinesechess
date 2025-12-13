@@ -18,6 +18,15 @@
 #include "displayinterface.h"
 #include "chess_database.h"
 
+//加载音频文件
+Mix_Music* bgm;
+bool is_music_playing;
+void init_music(){
+     bgm = Mix_LoadMUS("res/music/bgm.mp3");
+     is_music_playing = false;
+}
+
+
 // 棋盘布局  我想这总不会再搞错了
 // 我也觉得-lin
 int board[10][9] = {
@@ -54,6 +63,8 @@ const char* piece_names[28] = {
     "black_zu.png"      // 索引27（BLACK_ZU）
 };
 
+
+
 // 加载纹理
 SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* path) {
     //printf("尝试加载图片: %s\n", path);
@@ -74,12 +85,10 @@ SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* path) {
 }
 
 
-
-
-
 // 绘制选中指示器
 void drawSelectedIndicator(SDL_Renderer* renderer) {
     if (is_piece_selected) {
+         //Mix_Music* choseChess = Mix_LoadMUS("res/music/chose.mp3");
         int screen_x = GRID_ORIGIN_X + selected_y * GRID_WIDTH - PIECE_SIZE/2;
         int screen_y = GRID_ORIGIN_Y + selected_x * GRID_HEIGHT - PIECE_SIZE/2;
         
@@ -91,6 +100,8 @@ void drawSelectedIndicator(SDL_Renderer* renderer) {
         // 绘制更粗的边框
         SDL_RenderDrawRect(renderer, &(SDL_Rect){screen_x+1, screen_y+1, PIECE_SIZE-2, PIECE_SIZE-2});
         SDL_RenderDrawRect(renderer, &(SDL_Rect){screen_x+2, screen_y+2, PIECE_SIZE-4, PIECE_SIZE-4});
+        
+         //Mix_PlayMusic(choseChess, 0);
     }
 }
 
