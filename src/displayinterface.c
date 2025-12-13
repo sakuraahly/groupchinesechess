@@ -1,6 +1,5 @@
 //注意,到时候估计打包时外部链接资源(图片,音乐等)的路径又要改,先插个眼.
 //要把这个文件和res文件放到同一个目录下 --luo
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,11 +7,15 @@
 #include <stdint.h>
 #include <assert.h>
 #include <ctype.h>
+#include <time.h>
 #include <SDL2/SDL.h>
-//#include <SDL_main.h> //总之在目前的开发中不需要就是了
+//#include <SDL2/SDL_main.h> //总之在目前的开发中不需要就是了
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
+
+// ==================== 包含数据库头文件 ====================
+#include "chess_database.h"
 
 // 屏幕尺寸[由于不确定究竟是怎么样的,这里存疑]
 #define SCREEN_WIDTH  1200
@@ -44,37 +47,7 @@ typedef enum {
     GAME_STATE
 } GameState;
 
-// ====== 新的棋子编码定义 ======
-#define COLOR_RED    1  // 红方颜色代码
-#define COLOR_BLACK  2  // 黑方颜色代码
-
-// 棋子类型定义
-#define TYPE_JIANG   1  // 将/帅
-#define TYPE_SHI     2  // 士/仕
-#define TYPE_XIANG   3  // 象/相
-#define TYPE_MA      4  // 马
-#define TYPE_JU      5  // 车
-#define TYPE_PAO     6  // 炮
-#define TYPE_BING    7  // 兵/卒
-
-// 红方棋子编码（颜色代码1 + 棋子类型）
-#define RED_SHUAI    11  // 红帅
-#define RED_SHI      12  // 红士
-#define RED_XIANG    13  // 红相
-#define RED_MA       14  // 红马
-#define RED_JU       15  // 红车
-#define RED_PAO      16  // 红炮
-#define RED_BING     17  // 红兵
-
-// 黑方棋子编码（颜色代码2 + 棋子类型）
-#define BLACK_JIANG  21  // 黑将
-#define BLACK_SHI    22  // 黑仕
-#define BLACK_XIANG  23  // 黑象
-#define BLACK_MA     24  // 黑马
-#define BLACK_JU     25  // 黑车
-#define BLACK_PAO    26  // 黑炮
-#define BLACK_ZU     27  // 黑卒
-
+// ====== 棋子编码定义（已在chess_database.h中定义） ======
 #define NONE         0  // 无棋子
 
 // 棋盘布局  我想这总不会再搞错了
@@ -113,7 +86,39 @@ const char* piece_names[28] = {
     "black_zu.png"      // 索引27（BLACK_ZU）
 };
 
-// 加载纹理 [真是白写,毕竟我创建的GUI程序看不到这些]  //注意这些path是只要有图片文件的相对路径就行了,同时以"路径"的格式作为参数传入
+// ==================== 新增全局变量 ====================
+static GameRecord current_game;        // 当前棋局记录
+static ChessMove current_move;         // 当前棋步记录
+static bool is_red_turn = true;        // 当前轮到红方走棋
+static int move_step = 1;              // 当前步数计数器
+static time_t move_start_time = 0;     // 当前步开始时间
+
+// 棋子选择状态
+static bool is_piece_selected = false;
+static int selected_x = -1;
+static int selected_y = -1;
+static int selected_piece = NONE;
+
+// ==================== 函数声明 ====================
+SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* path);
+bool pointInRect(int x, int y, SDL_Rect rect);
+int getPieceColor(int piece);
+int getPieceType(int piece);
+
+// 新增函数声明
+bool screenToBoard(int screen_x, int screen_y, int* board_x, int* board_y);
+bool movePiece(int from_x, int from_y, int to_x, int to_y);
+bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y);
+void generateNotation(ChessMove* move, int from_x, int from_y, int to_x, int to_y, int piece_code);
+bool isSameColor(int piece1, int piece2);
+int countPiecesInLine(int x1, int y1, int x2, int y2);
+void handleBoardClick(int board_x, int board_y);
+void revokeLastMove();
+void drawSelectedIndicator(SDL_Renderer* renderer);
+void drawCurrentPlayerIndicator(SDL_Renderer* renderer);
+void drawGameInfo(SDL_Renderer* renderer);
+
+// 加载纹理
 SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* path) {
     //printf("尝试加载图片: %s\n", path);
     SDL_Surface* surface = IMG_Load(path);
@@ -132,7 +137,7 @@ SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* path) {
     return texture;
 }
 
-// 检查点是否在矩形内{这个功能先留着吧,之后会用到的?}
+// 检查点是否在矩形内
 bool pointInRect(int x, int y, SDL_Rect rect) {
     return (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h);
 }
@@ -149,8 +154,350 @@ int getPieceType(int piece) {
     return piece % 10;
 }
 
+// ==================== 新增函数实现 ====================
 
-//咳咳,然后这里这部分,考虑之后改变到game.c中,因为这里的东西太多了,而且还没有完全搞懂,所以先放这里吧,后面再整理.
+// 屏幕坐标转换为棋盘坐标
+bool screenToBoard(int screen_x, int screen_y, int* board_x, int* board_y) {
+    // 计算相对于格点原点的坐标
+    int relative_x = screen_x - GRID_ORIGIN_X;
+    int relative_y = screen_y - GRID_ORIGIN_Y;
+    
+    // 检查是否在棋盘范围内
+    if (relative_x < -PIECE_SIZE/2 || relative_x >= 9*GRID_WIDTH + PIECE_SIZE/2 ||
+        relative_y < -PIECE_SIZE/2 || relative_y >= 10*GRID_HEIGHT + PIECE_SIZE/2) {
+        return false;
+    }
+    
+    // 计算最近的格点
+    *board_y = (relative_x + GRID_WIDTH/2) / GRID_WIDTH;
+    *board_x = (relative_y + GRID_HEIGHT/2) / GRID_HEIGHT;
+    
+    // 检查坐标是否在有效范围内
+    if (*board_x < 0 || *board_x >= 10 || *board_y < 0 || *board_y >= 9) {
+        return false;
+    }
+    
+    return true;
+}
+
+// 检查两个棋子是否同色
+bool isSameColor(int piece1, int piece2) {
+    if (piece1 == NONE || piece2 == NONE) return false;
+    return (getPieceColor(piece1) == getPieceColor(piece2));
+}
+
+// 统计两点之间直线上的棋子数量
+int countPiecesInLine(int x1, int y1, int x2, int y2) {
+    int count = 0;
+    
+    if (x1 == x2) {
+        // 同一行
+        int start_y = (y1 < y2) ? y1 : y2;
+        int end_y = (y1 < y2) ? y2 : y1;
+        
+        for (int y = start_y + 1; y < end_y; y++) {
+            if (board[x1][y] != NONE) {
+                count++;
+            }
+        }
+    } else if (y1 == y2) {
+        // 同一列
+        int start_x = (x1 < x2) ? x1 : x2;
+        int end_x = (x1 < x2) ? x2 : x1;
+        
+        for (int x = start_x + 1; x < end_x; x++) {
+            if (board[x][y1] != NONE) {
+                count++;
+            }
+        }
+    }
+    
+    return count;
+}
+
+// 生成记谱法字符串
+void generateNotation(ChessMove* move, int from_x, int from_y, int to_x, int to_y, int piece_code) {
+    // 简化的记谱法：只记录移动
+    // 实际象棋记谱法更复杂，这里做简化
+    int piece_type = getPieceType(piece_code);
+    char piece_char;
+    
+    switch(piece_type) {
+        case TYPE_JIANG: piece_char = 'K'; break;  // King
+        case TYPE_SHI:   piece_char = 'A'; break;  // Advisor
+        case TYPE_XIANG: piece_char = 'B'; break;  // Bishop
+        case TYPE_MA:    piece_char = 'N'; break;  // kNight
+        case TYPE_JU:    piece_char = 'R'; break;  // Rook
+        case TYPE_PAO:   piece_char = 'C'; break;  // Cannon
+        case TYPE_BING:  piece_char = 'P'; break;  // Pawn
+        default:         piece_char = '?'; break;
+    }
+    
+    // 坐标转换：象棋通常用数字1-9表示列，汉字表示行
+    // 这里简化为行列数字
+    snprintf(move->notation, sizeof(move->notation), "%c%d%d-%d%d", 
+             piece_char, from_x, from_y, to_x, to_y);
+}
+
+// 检查移动是否合法（简化版象棋规则）
+bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y) {
+    // 不能原地不动
+    if (from_x == to_x && from_y == to_y) return false;
+    
+    // 不能吃自己的棋子
+    if (board[to_x][to_y] != NONE && isSameColor(piece_code, board[to_x][to_y])) {
+        return false;
+    }
+    
+    int color = getPieceColor(piece_code);
+    int type = getPieceType(piece_code);
+    int dx = to_x - from_x;
+    int dy = to_y - from_y;
+    int abs_dx = abs(dx);
+    int abs_dy = abs(dy);
+    
+    switch(type) {
+        case TYPE_JIANG:  // 将/帅
+            // 只能在九宫内移动
+            if (color == COLOR_RED) {
+                if (to_x < 7 || to_x > 9 || to_y < 3 || to_y > 5) return false;
+            } else {
+                if (to_x < 0 || to_x > 2 || to_y < 3 || to_y > 5) return false;
+            }
+            // 只能走一步
+            if (abs_dx + abs_dy != 1) return false;
+            return true;
+            
+        case TYPE_SHI:    // 士/仕
+            // 只能在九宫内斜走
+            if (color == COLOR_RED) {
+                if (to_x < 7 || to_x > 9 || to_y < 3 || to_y > 5) return false;
+            } else {
+                if (to_x < 0 || to_x > 2 || to_y < 3 || to_y > 5) return false;
+            }
+            // 只能斜走一步
+            if (abs_dx != 1 || abs_dy != 1) return false;
+            return true;
+            
+        case TYPE_XIANG:  // 象/相
+            // 不能过河
+            if (color == COLOR_RED && to_x < 5) return false;
+            if (color == COLOR_BLACK && to_x > 4) return false;
+            // 田字走法
+            if (abs_dx != 2 || abs_dy != 2) return false;
+            // 检查象眼是否被塞
+            int block_x = from_x + dx/2;
+            int block_y = from_y + dy/2;
+            if (board[block_x][block_y] != NONE) return false;
+            return true;
+            
+        case TYPE_MA:     // 马
+            // 日字走法
+            if (!((abs_dx == 2 && abs_dy == 1) || (abs_dx == 1 && abs_dy == 2))) {
+                return false;
+            }
+            // 检查蹩马腿
+            if (abs_dx == 2) {
+                int block_x = from_x + dx/2;
+                if (board[block_x][from_y] != NONE) return false;
+            } else {
+                int block_y = from_y + dy/2;
+                if (board[from_x][block_y] != NONE) return false;
+            }
+            return true;
+            
+        case TYPE_JU:     // 车
+            // 直线移动
+            if (from_x != to_x && from_y != to_y) return false;
+            // 路径上不能有其他棋子
+            if (countPiecesInLine(from_x, from_y, to_x, to_y) > 0) return false;
+            return true;
+            
+        case TYPE_PAO:    // 炮
+            // 直线移动
+            if (from_x != to_x && from_y != to_y) return false;
+            int pieces_count = countPiecesInLine(from_x, from_y, to_x, to_y);
+            // 吃子时需要隔一个棋子
+            if (board[to_x][to_y] != NONE) {
+                return pieces_count == 1;
+            } else {
+                return pieces_count == 0;
+            }
+            
+        case TYPE_BING:   // 兵/卒
+            // 红方向上移动，黑方向下移动
+            if (color == COLOR_RED) {
+                if (dx > 0) return false;  // 红兵不能后退
+                if (from_x > 4 && abs_dx > 1) return false;  // 过河前只能走一步
+            } else {
+                if (dx < 0) return false;  // 黑卒不能后退
+                if (from_x < 5 && abs_dx > 1) return false;  // 过河前只能走一步
+            }
+            // 只能走一步
+            if (abs_dx + abs_dy != 1) return false;
+            // 不能横向移动（除非过河）
+            if (abs_dy > 0) {
+                if (color == COLOR_RED && from_x >= 5) return false;  // 红兵没过河
+                if (color == COLOR_BLACK && from_x <= 4) return false; // 黑卒没过河
+            }
+            return true;
+            
+        default:
+            return false;
+    }
+}
+
+// 移动棋子
+bool movePiece(int from_x, int from_y, int to_x, int to_y) {
+    int piece = board[from_x][from_y];
+    
+    if (piece == NONE) return false;
+    
+    // 检查移动是否合法
+    if (!isValidMove(piece, from_x, from_y, to_x, to_y)) {
+        printf("非法移动！\n");
+        return false;
+    }
+    
+    // 记录吃子信息
+    int captured_piece = board[to_x][to_y];
+    
+    // 执行移动
+    board[to_x][to_y] = piece;
+    board[from_x][from_y] = NONE;
+    
+    // 生成记谱法
+    generateNotation(&current_move, from_x, from_y, to_x, to_y, piece);
+    
+    // 初始化棋步记录
+    init_chess_move(&current_move, move_step, piece, 
+                   current_move.notation, from_x, from_y, to_x, to_y);
+    
+    // 计算思考时间
+    if (move_start_time > 0) {
+        current_move.thinking_time = (int)(time(NULL) - move_start_time);
+    }
+    
+    // 添加到棋局记录
+    add_move_to_game(&current_game, &current_move);
+    
+    // 更新状态
+    move_step++;
+    is_red_turn = !is_red_turn;
+    move_start_time = time(NULL);
+    
+    printf("移动成功！第%d步：%s %s\n", 
+           current_move.step_number, current_move.piece_name, current_move.notation);
+    
+    // 检查是否吃子
+    if (captured_piece != NONE) {
+        printf("吃掉了%s！\n", get_piece_name_cn(captured_piece));
+    }
+    
+    return true;
+}
+
+// 处理棋盘点击
+void handleBoardClick(int board_x, int board_y) {
+    int clicked_piece = board[board_x][board_y];
+    
+    if (!is_piece_selected) {
+        // 第一次点击：选择棋子
+        if (clicked_piece == NONE) {
+            printf("点击了空位置\n");
+            return;
+        }
+        
+        // 检查是否轮到该棋子走
+        int piece_color = getPieceColor(clicked_piece);
+        if ((is_red_turn && piece_color != COLOR_RED) ||
+            (!is_red_turn && piece_color != COLOR_BLACK)) {
+            printf("现在轮到%s走棋！\n", is_red_turn ? "红方" : "黑方");
+            return;
+        }
+        
+        // 选择棋子
+        is_piece_selected = true;
+        selected_x = board_x;
+        selected_y = board_y;
+        selected_piece = clicked_piece;
+        
+        printf("选择了%s (%d,%d)\n", 
+               get_piece_name_cn(selected_piece), selected_x, selected_y);
+    } else {
+        // 第二次点击：移动棋子或取消选择
+        if (board_x == selected_x && board_y == selected_y) {
+            // 点击同一位置：取消选择
+            is_piece_selected = false;
+            printf("取消选择\n");
+        } else {
+            // 尝试移动棋子
+            if (movePiece(selected_x, selected_y, board_x, board_y)) {
+                is_piece_selected = false;
+            } else {
+                printf("移动失败，请重新选择目标位置\n");
+            }
+        }
+    }
+}
+
+// 悔棋功能
+void revokeLastMove() {
+    if (current_game.move_count == 0) {
+        printf("没有棋步可以悔棋！\n");
+        return;
+    }
+    
+    ChessMove* last_move = &current_game.moves[current_game.move_count - 1];
+    
+    // 恢复棋盘状态
+    board[last_move->from_x][last_move->from_y] = last_move->piece_code;
+    board[last_move->to_x][last_move->to_y] = NONE;
+    
+    // 更新棋局记录
+    current_game.move_count--;
+    
+    // 更新游戏状态
+    move_step--;
+    is_red_turn = !is_red_turn;
+    
+    printf("悔棋成功！恢复第%d步\n", last_move->step_number);
+}
+
+// 绘制选中指示器
+void drawSelectedIndicator(SDL_Renderer* renderer) {
+    if (is_piece_selected) {
+        int screen_x = GRID_ORIGIN_X + selected_y * GRID_WIDTH - PIECE_SIZE/2;
+        int screen_y = GRID_ORIGIN_Y + selected_x * GRID_HEIGHT - PIECE_SIZE/2;
+        
+        // 绘制黄色边框表示选中
+        SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+        SDL_Rect rect = {screen_x, screen_y, PIECE_SIZE, PIECE_SIZE};
+        SDL_RenderDrawRect(renderer, &rect);
+        
+        // 绘制更粗的边框
+        SDL_RenderDrawRect(renderer, &(SDL_Rect){screen_x+1, screen_y+1, PIECE_SIZE-2, PIECE_SIZE-2});
+        SDL_RenderDrawRect(renderer, &(SDL_Rect){screen_x+2, screen_y+2, PIECE_SIZE-4, PIECE_SIZE-4});
+    }
+}
+
+// 绘制当前玩家指示器
+void drawCurrentPlayerIndicator(SDL_Renderer* renderer) {
+    // 在屏幕右上角显示当前回合
+    SDL_Color text_color = is_red_turn ? (SDL_Color){255, 50, 50, 255} : (SDL_Color){0, 0, 0, 255};
+    const char* text = is_red_turn ? "红方回合" : "黑方回合";
+    
+    // 这里可以添加TTF字体渲染，为了简化，先输出到控制台
+    printf("%s\n", text);
+}
+
+// 绘制游戏信息
+void drawGameInfo(SDL_Renderer* renderer) {
+    // 可以在这里绘制步数、思考时间等信息
+    // 暂时只输出到控制台
+    printf("当前步数: %d, 总步数: %d\n", move_step, current_game.move_count);
+}
+
 // 主函数
 int main(int argc, char* argv[]) {//塞一个void试试?
     // 初始化SDL
@@ -174,7 +521,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
         return -1;
     }
 
-    // 创建窗口和渲染器  [你可以把文本内容换成任何你想换成的东西]  {这个centered和shown就别管了,这是库里东西,大概就是居中显示的意思}
+    // 创建窗口和渲染器
     SDL_Window* window = SDL_CreateWindow("中国象棋", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                           SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window) {//强调一下,这个创建失败是出现一个空指针,NULL在bool上是false的等价.
@@ -194,8 +541,6 @@ int main(int argc, char* argv[]) {//塞一个void试试?
         SDL_Quit();
         return -1;
     }
-
-
 
     // 加载背景音乐
     Mix_Music* bgm = Mix_LoadMUS("res/music/bgm.mp3");
@@ -221,15 +566,17 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     // ====== 新增：加载侧边按钮图标 ======
     SDL_Texture* return_button = loadTexture(renderer, "res/images/return_to_menu.jpg");
     SDL_Texture* revoke_button = loadTexture(renderer, "res/images/revoke_chess.png");
+    // 新增保存按钮
+    SDL_Texture* save_button = loadTexture(renderer, "res/images/save_button.png");
 
-    // 创建开始按钮{这些参数是猜测出来的,请见谅}
+    // 创建开始按钮
     SDL_Rect startButtonRect = {
         (SCREEN_WIDTH - 200) / 2,
         (SCREEN_HEIGHT - 80) / 2 + 100,
         200, 80
     };
 
-    // ====== 新增：创建侧边按钮位置 ======
+    // 创建侧边按钮位置
     SDL_Rect returnButtonRect = {
         30,   // 距离左侧30像素
         100,  // 距离顶部100像素
@@ -242,6 +589,14 @@ int main(int argc, char* argv[]) {//塞一个void试试?
         250,  // 在返回按钮下方150像素（100+100+50间距）
         159,  // 宽度
         86    // 高度
+    };
+    
+    // 新增保存按钮位置
+    SDL_Rect saveButtonRect = {
+        30,   // 和悔棋按钮在同一列
+        400,  // 在悔棋按钮下方
+        100,  // 宽度
+        50    // 高度
     };
 
     // 游戏状态
@@ -261,10 +616,10 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     printf("红帅(9,4): 格点(%d,%d)\n", 
            GRID_ORIGIN_X + 4 * GRID_WIDTH, GRID_ORIGIN_Y + 9 * GRID_HEIGHT);
 
-    // 主循环[这里是游戏的本体部分,我们需要在这里实现游戏逻辑] {但是还没有写好,先放着吧,后面再补充}
+    // 主循环
     bool running = true;
     while (running) {
-        SDL_Event event; //这又是一个SDL的事件结构体,大概就是有类型和鼠标按键位置
+        SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
@@ -278,28 +633,60 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                 // 菜单状态下点击开始按钮
                 if (currentState == MENU_STATE && pointInRect(mouseX, mouseY, startButtonRect)) {
                     currentState = GAME_STATE;
+                    // 初始化棋局记录
+                    init_game_record(&current_game, "GAME001", "红方玩家", "黑方玩家");
+                    move_start_time = time(NULL);
+                    printf("新游戏开始！红方先走。\n");
                 }
 
-                // ====== 新增：游戏状态下点击侧边按钮 ======
+                // 游戏状态下点击
                 if (currentState == GAME_STATE) {
                     // 检查"回到菜单"按钮
                     if (pointInRect(mouseX, mouseY, returnButtonRect)) {
                         printf("回到菜单\n");
-                     currentState = MENU_STATE;
-                 }
+                        currentState = MENU_STATE;
+                        is_piece_selected = false;
+                    }
         
                     // 检查"悔棋"按钮
                     if (pointInRect(mouseX, mouseY, revokeButtonRect)) {
                         printf("悔棋\n");
-                        // 这里需要实现悔棋功能
+                        revokeLastMove();
+                    }
+                    
+                    // 检查"保存棋局"按钮
+                    if (pointInRect(mouseX, mouseY, saveButtonRect)) {
+                        printf("保存棋局\n");
+                        save_game_to_file(&current_game, "chess_game_record.txt");
+                    }
+                    
+                    // 检查是否点击了棋盘
+                    int board_x, board_y;
+                    if (screenToBoard(mouseX, mouseY, &board_x, &board_y)) {
+                        handleBoardClick(board_x, board_y);
                     }
                 }
             }
             
-            // 按ESC返回菜单{其实这个功能也没什么卵用,反正就是个单机游戏,算了,之后再加上一个返回菜单的图标吧}
+            // 按ESC返回菜单
             if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
                 if (currentState == GAME_STATE) {
                     currentState = MENU_STATE;
+                    is_piece_selected = false;
+                }
+            }
+            
+            // 按S键保存棋局
+            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_s) {
+                if (currentState == GAME_STATE) {
+                    save_game_to_file(&current_game, "chess_game_record.txt");
+                }
+            }
+            
+            // 按R键悔棋
+            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
+                if (currentState == GAME_STATE) {
+                    revokeLastMove();
                 }
             }
         }
@@ -345,7 +732,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                 };
                 SDL_RenderCopy(renderer, chess_board, NULL, &boardRect);
             } else {
-                // 如果没有棋盘图片，绘制简单棋盘(总感觉这是特么多余的)
+                // 如果没有棋盘图片，绘制简单棋盘
                 SDL_SetRenderDrawColor(renderer, 210, 180, 140, 255);
                 SDL_Rect boardRect = { 
                     BOARD_VISUAL_X, 
@@ -371,13 +758,6 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                             
                             SDL_Rect dest = {screen_x, screen_y, PIECE_SIZE, PIECE_SIZE};
                             SDL_RenderCopy(renderer, pieces[piece], NULL, &dest);
-                            
-                            // 调试输出关键棋子位置
-                            if ((x == 0 && y == 0) || (x == 0 && y == 4) || 
-                                (x == 9 && y == 4) || (x == 9 && y == 0)) {
-                                printf("棋子(%d,%d): 屏幕(%d,%d), 类型=%d\n", 
-                                       x, y, screen_x, screen_y, piece);
-                            }
                         } else {
                             // 棋子纹理加载失败，绘制占位矩形
                             int screen_x = GRID_ORIGIN_X + y * GRID_WIDTH - PIECE_SIZE/2;
@@ -389,9 +769,17 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                     }
                 }
             }
-            //printf("总共绘制了 %d 个棋子\n", pieceCount);
+            
+            // 绘制选中指示器
+            drawSelectedIndicator(renderer);
+            
+            // 绘制当前玩家指示器
+            drawCurrentPlayerIndicator(renderer);
+            
+            // 绘制游戏信息
+            drawGameInfo(renderer);
 
-            // =============== 侧边按钮渲染代码 ===============
+            // 侧边按钮渲染代码
             // 渲染"回到菜单"按钮
             if (return_button) {
                 SDL_RenderCopy(renderer, return_button, NULL, &returnButtonRect);
@@ -415,7 +803,18 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                 SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
                 SDL_RenderDrawRect(renderer, &revokeButtonRect);
             }
-            // =============== 插入结束 ===============
+            
+            // 渲染"保存棋局"按钮
+            if (save_button) {
+                SDL_RenderCopy(renderer, save_button, NULL, &saveButtonRect);
+            } else {
+                // 如果图标加载失败，绘制默认按钮
+                SDL_SetRenderDrawColor(renderer, 50, 200, 50, 255);
+                SDL_RenderFillRect(renderer, &saveButtonRect);
+                // 绘制边框
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                SDL_RenderDrawRect(renderer, &saveButtonRect);
+            }
         }
 
         // 呈现画面
@@ -423,7 +822,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
         SDL_Delay(16);
     }
 
-    // 清理资源,这些都没有什么好讲的,总之就是清理我创建的窗口了{不然你就要手动杀进程//否则内存泄露//大家玩完}
+    // 清理资源
     //printf("清理资源...\n");
 
     if (bgm) {
@@ -438,9 +837,10 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     if (chess_board) SDL_DestroyTexture(chess_board);
     if (start_button) SDL_DestroyTexture(start_button);
 
-    // ====== 新增：清理侧边按钮纹理 ======
+    // 清理侧边按钮纹理
     if (return_button) SDL_DestroyTexture(return_button);
     if (revoke_button) SDL_DestroyTexture(revoke_button);
+    if (save_button) SDL_DestroyTexture(save_button);
     
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
