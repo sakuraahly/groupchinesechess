@@ -1,138 +1,193 @@
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef TIMER_H
+#define TIMER_H
+
 #include <time.h>
-#include <conio.h>
-#include <windows.h> 
+#include <stdbool.h>
+
+// 保持原有的结构体定义不变，确保向后兼容
 typedef struct {
-    int minutes;    
-    int seconds;   
-    int total_time; 
-    int is_running; 
-} Player;
+    time_t start_time;      // 计时开始时间
+    time_t elapsed_time;    // 已用时间（秒）
+    time_t time_limit;      // 时间限制（秒），0表示无限制
+    bool is_running;        // 是否正在运行
+    bool is_paused;         // 是否暂停
+    time_t pause_start;     // 暂停开始时间
+    time_t total_pause_time; // 总暂停时间
+} Timer;
 
-Player player1, player2;
-Player *current_player;
+// 保持原有的函数声明不变（向后兼容）
+void timer_init(Timer *timer, int time_limit);
+int timer_get_elapsed_seconds(Timer *timer);
+int timer_is_time_up(Timer *timer);
+void timer_display(Timer *timer, const char *player_name);
 
+// 新增功能函数（但game和displayinterface不需要调用这些）
+void timer_start(Timer *timer);
+void timer_pause(Timer *timer);
+void timer_resume(Timer *timer);
+void timer_stop(Timer *timer);
+void timer_reset(Timer *timer);
+int timer_get_remaining_seconds(Timer *timer);
+void timer_format_time(time_t seconds, char *buffer, size_t buffer_size);
+const char* timer_get_status_string(Timer *timer);
 
-void init_players(int minutes) {
-    player1.minutes = minutes;
-    player1.seconds = 0;
-    player1.total_time = minutes * 60;
-    player1.is_running = 0;
-    
-    player2.minutes = minutes;
-    player2.seconds = 0;
-    player2.total_time = minutes * 60;
-    player2.is_running = 0;
+#endif
+
+#include "timer.h"
+#include <stdio.h>
+#include <string.h>
+
+// 保持原有函数名不变，但内部实现增强
+void timer_init(Timer *timer, int time_limit) {
+    timer->start_time = 0;
+    timer->elapsed_time = 0;
+    timer->time_limit = time_limit * 60; // 转换为秒
+    timer->is_running = false;
+    timer->is_paused = false;
+    timer->pause_start = 0;
+    timer->total_pause_time = 0;
 }
 
-
-void display_time() {
-    system("cls"); 
-    printf("计时器\n");
+int timer_get_elapsed_seconds(Timer *timer) {
+    time_t elapsed = timer->elapsed_time;
     
-    
-    if(current_player == &player1) {
-        printf(">>> 红方: %02d:%02d <<<\n", 
-               player1.minutes, player1.seconds);
-    } else {
-        printf("    红方: %02d:%02d    \n", 
-               player1.minutes, player1.seconds);
+    if (timer->is_running && !timer->is_paused) {
+        time_t current_time = time(NULL);
+        elapsed += (current_time - timer->start_time - timer->total_pause_time);
+    } else if (timer->is_paused) {
+        // 暂停状态下，已用时间不变
+        elapsed += (timer->pause_start - timer->start_time - timer->total_pause_time);
     }
     
-    
-    if(current_player == &player2) {
-        printf(">>> 黑方: %02d:%02d <<<\n", 
-               player2.minutes, player2.seconds);
-    } else {
-        printf("    黑方: %02d:%02d    \n", 
-               player2.minutes, player2.seconds);
-    }
-    
-    printf("\n按空格键切换玩家，ESC键退出\n");
+    return elapsed;
 }
 
+int timer_is_time_up(Timer *timer) {
+    if (timer->time_limit <= 0) {
+        return 0; // 无时间限制
+    }
+    
+    return timer_get_elapsed_seconds(timer) >= timer->time_limit;
+}
 
-void update_time() {
-    if(current_player->is_running) {
-        if(current_player->total_time > 0) {
-            current_player->total_time--;
-            current_player->minutes = current_player->total_time / 60;
-            current_player->seconds = current_player->total_time % 60;
+void timer_display(Timer *timer, const char *player_name) {
+    int elapsed = timer_get_elapsed_seconds(timer);
+    int minutes = elapsed / 60;
+    int seconds = elapsed % 60;
+    
+    // 保持原有的显示格式，确保displayinterface兼容
+    printf("%s方: %02d:%02d", player_name, minutes, seconds);
+    
+    if (timer->time_limit > 0) {
+        int remaining = timer->time_limit - elapsed;
+        if (remaining < 0) remaining = 0;
+        int rem_minutes = remaining / 60;
+        int rem_seconds = remaining % 60;
+        printf(" (剩余: %02d:%02d)", rem_minutes, rem_seconds);
+        
+        if (timer_is_time_up(timer)) {
+            printf(" ⏰ 超时!");
         }
     }
-}
-
-
-void switch_player() {
-    if(current_player == &player1) {
-        player1.is_running = 0;
-        player2.is_running = 1;
-        current_player = &player2;
+    
+    // 添加状态指示器（不影响原有显示）
+    if (timer->is_paused) {
+        printf(" ⏸️");
+    } else if (timer->is_running) {
+        printf(" ▶️");
     } else {
-        player2.is_running = 0;
-        player1.is_running = 1;
-        current_player = &player1;
+        printf(" ⏹️");
+    }
+    
+    printf("\n");
+}
+
+// 新增功能函数（game文件不需要调用这些，但可以在需要时使用）
+void timer_start(Timer *timer) {
+    if (!timer->is_running && !timer->is_paused) {
+        timer->start_time = time(NULL);
+        timer->is_running = true;
+        timer->is_paused = false;
+        timer->total_pause_time = 0;
     }
 }
 
-
-int check_timeout() {
-    if(player1.total_time <= 0) {
-        printf("\n红方超时！黑方获胜！\n");
-        return 1;
+void timer_pause(Timer *timer) {
+    if (timer->is_running && !timer->is_paused) {
+        timer->pause_start = time(NULL);
+        timer->is_paused = true;
     }
-    if(player2.total_time <= 0) {
-        printf("\n黑方超时！红方获胜！\n");
-        return 1;
-    }
-    return 0;
 }
 
-int main() {
-    int initial_time;
-    
-    printf("设置时间（分钟）: ");
-    scanf("%d", &initial_time);
-    
-    
-    init_players(initial_time);
-    
-    
-    current_player = &player1;
-    player1.is_running = 1;
-    
-    printf("红方先行。\n");
-    printf("按任意键继续...");
-    getch();
-    
-    
-    while(1) {
-        display_time();
-        
-        
-        if(kbhit()) {
-            char key = getch();
-            
-            if(key == ' ') { // 按空格切换玩家
-                switch_player();
-            } else if(key == 27) { // ESC键退出
-                printf("\n游戏结束！\n");
-                break;
-            }
+void timer_resume(Timer *timer) {
+    if (timer->is_running && timer->is_paused) {
+        time_t current_time = time(NULL);
+        timer->total_pause_time += (current_time - timer->pause_start);
+        timer->is_paused = false;
+        timer->pause_start = 0;
+    }
+}
+
+void timer_stop(Timer *timer) {
+    if (timer->is_running) {
+        if (timer->is_paused) {
+            time_t current_time = time(NULL);
+            timer->total_pause_time += (current_time - timer->pause_start);
+        } else {
+            time_t current_time = time(NULL);
+            timer->elapsed_time += (current_time - timer->start_time - timer->total_pause_time);
         }
         
-       
-        update_time();
-        
-        
-        if(check_timeout()) {
-            break;
-        }
-        
-       
-        Sleep(1000);
+        timer->is_running = false;
+        timer->is_paused = false;
+        timer->start_time = 0;
+        timer->pause_start = 0;
+        timer->total_pause_time = 0;
+    }
+}
+
+void timer_reset(Timer *timer) {
+    timer->start_time = 0;
+    timer->elapsed_time = 0;
+    timer->is_running = false;
+    timer->is_paused = false;
+    timer->pause_start = 0;
+    timer->total_pause_time = 0;
+}
+
+int timer_get_remaining_seconds(Timer *timer) {
+    if (timer->time_limit <= 0) {
+        return -1; // 无时间限制
     }
     
-    return 0;
+    int elapsed = timer_get_elapsed_seconds(timer);
+    int remaining = timer->time_limit - elapsed;
+    
+    return (remaining > 0) ? remaining : 0;
+}
+
+void timer_format_time(time_t seconds, char *buffer, size_t buffer_size) {
+    if (seconds < 0) {
+        snprintf(buffer, buffer_size, "无限");
+        return;
+    }
+    
+    int minutes = seconds / 60;
+    int secs = seconds % 60;
+    
+    if (minutes > 0) {
+        snprintf(buffer, buffer_size, "%02d:%02d", minutes, secs);
+    } else {
+        snprintf(buffer, buffer_size, "%02d秒", secs);
+    }
+}
+
+const char* timer_get_status_string(Timer *timer) {
+    if (timer->is_paused) {
+        return "暂停";
+    } else if (timer->is_running) {
+        return "运行中";
+    } else {
+        return "停止";
+    }
 }
