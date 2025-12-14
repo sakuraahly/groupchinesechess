@@ -12,6 +12,9 @@
 #include "displayinterface.h"
 #include "chess_move.h"
 
+//引入棋盘
+extern board[BOARD_ROWS][BOARD_COLS];
+
 // 检查点是否在矩形内
 bool pointInRect(int x, int y, SDL_Rect rect) {
     return (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h);
@@ -198,80 +201,52 @@ bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y) {
     }
 }
 
-// 移动棋子
-bool movePiece(int from_x, int from_y, int to_x, int to_y) {
-    int piece = board[from_x][from_y];
-    
-    if (piece == NONE) return false;
-    
-    // 检查移动是否合法
-    if (!isValidMove(piece, from_x, from_y, to_x, to_y)) {
-        printf("非法移动！\n");
+//移动棋子
+bool make_move_with_record(MoveHistory* history, int from_x, int from_y, int to_x, int to_y) {
+    if (!is_move_valid(from_x, from_y, to_x, to_y)) {
         return false;
     }
     
-    // 记录吃子信息
+    int moved_piece = board[from_x][from_y];
     int captured_piece = board[to_x][to_y];
     
     // 执行移动
-    board[to_x][to_y] = piece;
+    board[to_x][to_y] = moved_piece;
     board[from_x][from_y] = NONE;
-    Mix_Music* eat = Mix_LoadMUS("res/music/eat.mp3");
-    Mix_PlayMusic(eat, 0);
-    is_music_playing = false;
     
-    // 生成记谱法
-    generateNotation(&current_move, from_x, from_y, to_x, to_y, piece);
-    
-    // 初始化棋步记录
-    init_chess_move(&current_move, move_step, piece, 
-                   current_move.notation, from_x, from_y, to_x, to_y);
-    
+    // 记录移动
+    record_move(history, from_x, from_y, to_x, to_y, captured_piece, moved_piece);
+
     // 计算思考时间
     if (move_start_time > 0) {
         current_move.thinking_time = (int)(time(NULL) - move_start_time);
     }
     
-    // 添加到棋局记录
-    add_move_to_game(&current_game, &current_move);
-    
-    // 更新状态
-    move_step++;
-    is_red_turn = !is_red_turn;
-    move_start_time = time(NULL);
-    
-    printf("移动成功！第%d步：%s %s\n", 
-           current_move.step_number, current_move.piece_name, current_move.notation);
-    
-    // 检查是否吃子
-    if (captured_piece != NONE) {
-        printf("吃掉了%s！\n", get_piece_name_cn(captured_piece));
-    }
-    
     return true;
 }
 
-// 悔棋功能
-void revokeLastMove() {
-    if (current_game.move_count == 0) {
-        printf("没有棋步可以悔棋！\n");
-        return;
+
+/*悔棋功能*/
+bool undo_move(MoveHistory* history) 
+{
+    if (history == NULL || history->current == NULL) {
+        printf("无法悔棋：已经到达初始状态\n");
+        return false;
     }
     
-    ChessMove* last_move = &current_game.moves[current_game.move_count - 1];
+    MoveRecord* current_move = history->current;
     
-    // 恢复棋盘状态
-    board[last_move->from_x][last_move->from_y] = last_move->piece_code;
-    board[last_move->to_x][last_move->to_y] = NONE;
+    // 执行反向移动：将棋子移回原位置
+    board[current_move->from_x][current_move->from_y] = current_move->napiece;
     
-    // 更新棋局记录
-    current_game.move_count--;
+    // 恢复被吃掉的棋子（如果有）
+    board[current_move->to_x][current_move->to_y] = current_move->chipiece;
     
-    // 更新游戏状态
-    move_step--;
-    is_red_turn = !is_red_turn;
+    // 移动到上一步记录
+    history->current = current_move->prev;
     
-    printf("悔棋成功！恢复第%d步\n", last_move->step_number);
+    printf("悔棋成功\n");
+    return true;
 }
 
 // 处理棋盘点击
@@ -319,3 +294,99 @@ void handleBoardClick(int board_x, int board_y) {
         }
     }
 }
+
+// 创建移动历史记录
+MoveHistory* create_move_history() {
+    MoveHistory* history = (MoveHistory*)malloc(sizeof(MoveHistory));
+    assert(history!=NULL);
+    if (history == NULL) {
+        perror("malloc fail");
+        return NULL;
+    }
+    history->current = NULL;
+    history->tail = NULL;
+    history->move_count = 0;
+    return history;
+}
+
+// 记录移动
+void record_move(MoveHistory* history, int from_x, int from_y, int to_x, int to_y, int chipiece, int napiece) {
+    // 如果当前不是最新记录，清除后面的记录
+    assert(history!=NULL);
+    if (history->current != history->tail) {
+        MoveRecord* temp = (history->current ? history->current->next : history->tail);//依据current是否为NULL,判断从哪开始清理
+        while (temp != NULL) {
+            MoveRecord* next = temp->next;
+            free(temp);
+            temp = next;
+        }
+    }
+    
+    MoveRecord* new_move = (MoveRecord*)malloc(sizeof(MoveRecord));
+    assert(new_move!= NULL);
+    if (new_move == NULL) {
+        perror("malloc fail");
+        return;
+    }
+    
+    new_move->from_x = from_x;
+    new_move->from_y = from_y;
+    new_move->to_x = to_x;
+    new_move->to_y = to_y;
+    new_move->chipiece = chipiece;
+    new_move->napiece = napiece;
+    new_move->prev = history->tail;
+    new_move->next = NULL;
+    
+    if (history->tail != NULL) {
+        history->tail->next = new_move;
+    }
+    
+    history->tail = new_move;
+    history->current = new_move;
+    
+    if (history->move_count == 0) {
+        // 第一个记录
+        history->current = new_move;
+    }
+    
+    history->move_count++;
+}
+
+// 撤悔操作
+bool redo_move(MoveHistory* history) 
+{
+    if (history == NULL || history->current == NULL || history->current->next == NULL) {
+        printf("无法撤悔：没有可撤悔的步骤\n");
+        return false;
+    }
+    
+    MoveRecord* next_move = history->current->next;
+    
+    // 重新执行移动
+    board[next_move->to_x][next_move->to_y] = next_move->napiece;
+    board[next_move->from_x][next_move->from_y] = NONE;
+    
+    // 移动到下一步记录
+    history->current = next_move;
+    
+    printf("撤悔成功\n");
+    return true;
+}
+
+// 清空移动历史（除了初始状态）
+void clear_move_history(MoveHistory* history) {
+    if (history == NULL) return;
+    
+    MoveRecord* current = history->tail;
+    while (current != NULL) {
+        MoveRecord* prev = current->prev;
+        free(current);
+        current = prev;
+    }
+    
+    history->current = NULL;
+    history->tail = NULL;
+    history->move_count = 0;
+}
+
