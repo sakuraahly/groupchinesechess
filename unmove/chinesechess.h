@@ -1,8 +1,8 @@
+#pragma once
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include<assert.h>
-#include<stdbool.h>
 #include<time.h>
 
 // 棋盘常量定义
@@ -10,91 +10,76 @@
 #define BOARD_COLS 9     // 棋盘列数
 #define EMPTY 0          // 空位置标记
 
-// 棋子颜色定义（十位）
+// 棋子颜色定义
 #define RED 1            // 红方
 #define BLACK 2          // 黑方
 
-// 棋子种类定义（个位）
-#define BING 1        // 兵/卒
-#define JU 2        // 车
-#define PAO 3         // 炮
-#define MA 4          // 马
-#define XIANG 5       // 象/相
-#define SHI 6        // 士/仕
-#define JIANG 7        // 将/帅
+// 棋子种类定义
+#define TYPE_JIANG  1         // 将/帅
+#define TYPE_SHI    2         // 士/仕  
+#define TYPE_XIANG  3         // 象/相
+#define TYPE_MA     4         // 马
+#define TYPE_JU     5         // 车
+#define TYPE_PAO    6         // 炮
+#define TYPE_BING   7         // 兵/卒
 
-// 使用两位数定义棋子：十位代表颜色，个位代表种类
-#define RED_BING     (RED * 10 + BING)     // 红兵 = 11
-#define BLACK_BING   (BLACK * 10 + BING)   // 黑卒 = 21
-#define RED_JU     (RED * 10 + JU)     // 红车 = 12
-#define BLACK_JU   (BLACK * 10 + JU)   // 黑车 = 22
-#define RED_PAO      (RED * 10 + PAO)      // 红炮 = 13
-#define BLACK_PAO    (BLACK * 10 + PAO)    // 黑炮 = 23
-#define RED_MA       (RED * 10 + MA)       // 红马 = 14
-#define BLACK_MA     (BLACK * 10 + MA)     // 黑马 = 24
-#define RED_XIANG    (RED * 10 + XIANG)    // 红相 = 15
-#define BLACK_XIANG  (BLACK * 10 + XIANG)  // 黑象 = 25
-#define RED_SHI    (RED * 10 + SHI)     // 红仕 = 16
-#define BLACK_SHI   (BLACK * 10 + SHI)   // 黑士 = 26
-#define RED_JIANG     (RED * 10 + JIANG)     // 红帅 = 17
-#define BLACK_JIANG   (BLACK * 10 + JIANG)   // 黑将 = 27
+// 红方棋子
+#define RED_JIANG   11   // 红帅
+#define RED_SHI     12   // 红仕
+#define RED_XIANG   13   // 红相
+#define RED_MA      14   // 红马
+#define RED_JU      15   // 红车
+#define RED_PAO     16   // 红炮
+#define RED_BING    17   // 红兵
+
+// 黑方棋子  
+#define BLACK_JIANG 21   // 黑将
+#define BLACK_SHI   22   // 黑士
+#define BLACK_XIANG 23   // 黑象
+#define BLACK_MA    24   // 黑马
+#define BLACK_JU    25   // 黑车
+#define BLACK_PAO   26   // 黑炮
+#define BLACK_BING  27   // 黑卒
+
+extern int board[BOARD_ROWS][BOARD_COLS];
 
 // 河流边界定义
 #define RIVER_RED 5      // 红方过河边界
 #define RIVER_BLACK 4    // 黑方过河边界
 
-// 全局棋盘数组
-int board[BOARD_ROWS][BOARD_COLS] = {0};
-
-
-// 工具函数：获取棋子的颜色（十位数）
 int get_piece_color(int piece);
 
-// 工具函数：获取棋子的种类（个位数）
 int get_piece_type(int piece);
 
-// 工具函数：判断棋子是否为红色
-bool is_red_piece(int piece) ;
+bool is_red_piece(int piece);
 
-// 工具函数：判断棋子是否为黑色
 bool is_black_piece(int piece);
 
-// 初始化棋盘，设置棋子的初始位置
-void init_board() ;
+void init_board();
 
-//显示当前棋盘状态
 void display_board();
 
-// 检查位置是否在棋盘范围内
-bool is_valid_position(int x, int y) ;
+bool is_valid_position(int x, int y);
 
-//判断两个棋子是否为同一方
- bool is_same_side(int piece1, int piece2);
+bool is_same_side(int piece1, int piece2);
 
-//计算两个位置之间的棋子数量
- int count_pieces_between(int x1, int y1, int x2, int y2);
+int count_pieces_between(int x1, int y1, int x2, int y2);
 
-//判断兵/卒的移动是否合法
-bool is_soldier_move_valid(int from_x, int from_y, int to_x, int to_y, int piece);
+bool is_bing_move_valid(int from_x, int from_y, int to_x, int to_y, int piece);
 
-//判断车的移动是否合法
-bool is_chariot_move_valid(int from_x, int from_y, int to_x, int to_y, int piece) ;
+bool is_ju_move_valid(int from_x, int from_y, int to_x, int to_y, int piece) ;
 
-// 判断炮的移动是否合法
-bool is_cannon_move_valid(int from_x, int from_y, int to_x, int to_y, int piece);
+bool is_pao_move_valid(int from_x, int from_y, int to_x, int to_y, int piece); 
 
-//判断走子是否合法（总验证函数）
-bool is_move_valid(int from_x, int from_y, int to_x, int to_y) ;
+bool is_ma_move_valid(int from_x, int from_y, int to_x, int to_y, int piece) ;
 
-//执行走子操作
-bool make_move(int from_x, int from_y, int to_x, int to_y) ;
+bool is_xiang_move_valid(int from_x, int from_y, int to_x, int to_y, int piece);
 
+bool is_shi_move_valid(int from_x, int from_y, int to_x, int to_y, int piece);
 
+bool is_jiang_move_valid(int from_x, int from_y, int to_x, int to_y, int piece) ;
 
-
-
-
-
+bool is_move_valid(int from_x, int from_y, int to_x, int to_y);
 
 /*huixui代码*/
 // 棋盘状态结构体
@@ -117,3 +102,31 @@ void updatehistory(BoardState** pphead);
 
 // 悔棋操作
 void undoMove(BoardState** pphead); 
+
+// 思路二=======================================================================================
+
+// 移动记录结构体
+typedef struct MoveRecord {
+    int from_x, from_y;     // 移动前的位置
+    int to_x, to_y;         // 移动后的位置
+    int chipiece;     // 被吃掉的棋子（如果有）
+    int napiece;        // 移动的棋子
+    struct MoveRecord* prev; // 上一步
+    struct MoveRecord* next; // 下一步（用于重做功能，可选）
+} MoveRecord;
+
+// 移动历史管理
+typedef struct {
+    MoveRecord* current;    // 当前移动记录
+    MoveRecord* tail;       // 历史记录尾部（最新记录）
+    int move_count;         // 总移动步数
+} MoveHistory;
+
+// 函数声明
+MoveHistory* create_move_history();
+void record_move(MoveHistory* history, int from_x, int from_y, int to_x, int to_y, int captured_piece, int moved_piece);
+bool undo_move(MoveHistory* history);
+bool redo_move(MoveHistory* history);
+void clear_move_history(MoveHistory* history);
+bool make_move_with_record(MoveHistory* history, int from_x, int from_y, int to_x, int to_y);
+
