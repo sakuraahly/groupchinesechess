@@ -17,6 +17,7 @@
 #include "chess_database.h"
 #include "displayinterface.h"
 
+
 int main(int argc, char* argv[]) {//塞一个void试试?
 
 
@@ -155,6 +156,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     //        GRID_ORIGIN_X + 4 * GRID_WIDTH, GRID_ORIGIN_Y + 9 * GRID_HEIGHT);
 
     // 主循环,大部分改变要在这里进行
+    MoveHistory* history=create_move_history();
     bool running = true;
     while (running) {
         SDL_Event event;
@@ -198,7 +200,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                     // 检查"悔棋"按钮
                     if (pointInRect(mouseX, mouseY, revokeButtonRect)) {
                         printf("悔棋\n");
-                        revokeLastMove();
+                        undo_move(history);
                     }
                     
                     // 检查"保存棋局"按钮
@@ -210,8 +212,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                     // ====== 新增：检查"撤销悔棋"按钮 ======
                     if (pointInRect(mouseX, mouseY, redoButtonRect)) {
                         printf("撤销悔棋\n");
-                        // TODO: 这里将来实现撤销悔棋功能
-                        // redoLastMove();
+                        redo_move(history);
                     }
                     
                     // 检查是否点击了棋盘上的棋子
@@ -406,7 +407,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
 
     // 清理资源
     //printf("清理资源...\n");
-
+    clear_move_history(history);
     if (bgm) {
         Mix_HaltMusic();
         Mix_FreeMusic(bgm);

@@ -207,15 +207,15 @@ bool make_move_with_record(MoveHistory* history, int from_x, int from_y, int to_
         return false;
     }
     
-    int moved_piece = board[from_x][from_y];
-    int captured_piece = board[to_x][to_y];
+    int na_piece = board[from_x][from_y];
+    int chi_piece = board[to_x][to_y];
     
     // 执行移动
-    board[to_x][to_y] = moved_piece;
+    board[to_x][to_y] = na_piece;
     board[from_x][from_y] = NONE;
     
     // 记录移动
-    record_move(history, from_x, from_y, to_x, to_y, captured_piece, moved_piece);
+    record_move(history, from_x, from_y, to_x, to_y, chi_piece, na_piece);
 
     // 计算思考时间
     if (move_start_time > 0) {
