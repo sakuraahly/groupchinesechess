@@ -2,6 +2,180 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Run main.exe (Compile then Run, No Debug)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/output/main.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [
+        {
+          "name": "LANG",
+          "value": "zh_CN.UTF-8"
+        },
+        {
+          "name": "LC_ALL",
+          "value": "zh_CN.UTF-8"
+        },
+        {
+          "name": "MSYS_UTF8",
+          "value": "1"
+        },
+        {
+          "name": "CONSOLE_ENCODING",
+          "value": "UTF-8"
+        }
+      ],
+      "externalConsole": true,
+      "preLaunchTask": "build all"
+    },
+    {
+      "name": "Run test.exe (Compile then Run, No Debug)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/output/test.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [
+        {
+          "name": "LANG",
+          "value": "zh_CN.UTF-8"
+        },
+        {
+          "name": "LC_ALL",
+          "value": "zh_CN.UTF-8"
+        },
+        {
+          "name": "MSYS_UTF8",
+          "value": "1"
+        },
+        {
+          "name": "CONSOLE_ENCODING",
+          "value": "UTF-8"
+        }
+      ],
+      "externalConsole": true,
+      "preLaunchTask": "build all"
+    },
+    {
+      "name": "Run learning.exe (Compile then Run, No Debug)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/output/learning.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [
+        {
+          "name": "LANG",
+          "value": "zh_CN.UTF-8"
+        },
+        {
+          "name": "LC_ALL",
+          "value": "zh_CN.UTF-8"
+        },
+        {
+          "name": "MSYS_UTF8",
+          "value": "1"
+        },
+        {
+          "name": "CONSOLE_ENCODING",
+          "value": "UTF-8"
+        }
+      ],
+      "externalConsole": true,
+      "preLaunchTask": "build all"
+    },
+    {
+      "name": "Run main_sdl.exe (Build SDL then Run)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/output/main_sdl.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [
+        {
+          "name": "LANG",
+          "value": "zh_CN.UTF-8"
+        },
+        {
+          "name": "LC_ALL",
+          "value": "zh_CN.UTF-8"
+        },
+        {
+          "name": "MSYS_UTF8",
+          "value": "1"
+        },
+        {
+          "name": "CONSOLE_ENCODING",
+          "value": "UTF-8"
+        }
+      ],
+      "externalConsole": true,
+      "preLaunchTask": "build sdl"
+    },
+    {
+      "name": "Run main_sdl_win.exe (Build SDL win then Run)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/output/main_sdl_win.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [
+        {
+          "name": "LANG",
+          "value": "zh_CN.UTF-8"
+        },
+        {
+          "name": "LC_ALL",
+          "value": "zh_CN.UTF-8"
+        },
+        {
+          "name": "MSYS_UTF8",
+          "value": "1"
+        },
+        {
+          "name": "CONSOLE_ENCODING",
+          "value": "UTF-8"
+        }
+      ],
+      "externalConsole": true,
+      "preLaunchTask": "build sdl win"
+    },
+    {
+      "name": "Run Current C File (Build then Run)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/output/${fileBasenameNoExtension}.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [
+        {
+          "name": "LANG",
+          "value": "zh_CN.UTF-8"
+        },
+        {
+          "name": "LC_ALL",
+          "value": "zh_CN.UTF-8"
+        },
+        {
+          "name": "MSYS_UTF8",
+          "value": "1"
+        },
+        {
+          "name": "CONSOLE_ENCODING",
+          "value": "UTF-8"
+        }
+      ],
+      "externalConsole": true,
+      "preLaunchTask": "build current file"
+    },
+    {
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",
       "request": "launch",
