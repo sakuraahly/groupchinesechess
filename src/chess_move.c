@@ -203,61 +203,61 @@ bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y) {
 }
 
 //寻找将的位置 -hu 12.22
-// place* find_jiang(place* jiang){
-// for(int row=0; row < 3;row++){//来找棋盘上方的将(黑方)
-//             for(int col=3;col<6;col++){
-//                 if (board[row][col] == 21){
-//                     jiang->x = row;
-//                     jiang->y = col;
-//                      return jiang;
-//                 }
-//         }
-//     }
+place* find_jiang(place* jiang){
+for(int row=0; row < 3;row++){//来找棋盘上方的将(黑方)
+            for(int col=3;col<6;col++){
+                if (board[row][col] == 21){
+                    jiang->x = row;
+                    jiang->y = col;
+                     return jiang;
+                }
+        }
+    }
        
-// }
-// //寻找帅的位置 -hu 12.22
-// place* find_shuai(place* shuai){
-// for(int row=7; row < 10;row++){//来找棋盘下方的帅(红方)
-//             for(int col=3;col<6;col++){
-//                     if (board[row][col] == 11){
-//                             shuai->x = row;
-//                             shuai->y = col;
-//                             return shuai;
+}
+//寻找帅的位置 -hu 12.22
+place* find_shuai(place* shuai){
+for(int row=7; row < 10;row++){//来找棋盘下方的帅(红方)
+            for(int col=3;col<6;col++){
+                    if (board[row][col] == 11){
+                            shuai->x = row;
+                            shuai->y = col;
+                            return shuai;
 
-//                     }
-//                 }
-//             }
-//         }        
+                    }
+                }
+            }
+        }        
 
-// //判断是否将军,将军就播放音效 -hu 12.22
-// void is_jiangToDeath(place jiang){
-//     for(int row=0; row < 10;row++){
-//             for(int col=0;col<9;col++){
-//                 if(board != NONE){
-//                     int piececode = board[row][col];
-//                     if(isValidMove(piececode, row, col, jiang.x, jiang.y)){
-//                         //播放将军音频
-//                         Mix_PlayChannel(-1,jiangjun, 0);
-//                     }
-//                 } 
-//             }
-//         }
-// }
-// //判断是否将军,将军就播放音效 -hu 12.22
-// void is_shuaiToDeath(place shuai){
-//         for(int row=0; row < 10;row++){
-//             for(int col=0;col<9;col++){
-//                  if(board != NONE){
-//                     int piececode = board[row][col];
-//                     if(isValidMove(piececode, row, col, jiang.x, jiang.y)){
-//                         //播放将军音频
-//                         Mix_PlayChannel(-1,jiangjun, 0);
-//                     }
-//                 } 
-//             }
-//         }
-//     }
-// // ============================== 
+//判断是否将军,将军就播放音效 -hu 12.22
+void is_jiangToDeath(place jiang){
+    for(int row=0; row < 10;row++){
+            for(int col=0;col<9;col++){
+                if(board != NONE){
+                    int piececode = board[row][col];
+                    if(isValidMove(piececode, row, col, jiang.x, jiang.y)){
+                        //播放将军音频
+                        Mix_PlayChannel(-1,jiangjun, 0);
+                    }
+                } 
+            }
+        }
+}
+//判断是否将军,将军就播放音效 -hu 12.22
+void is_shuaiToDeath(place shuai){
+        for(int row=0; row < 10;row++){
+            for(int col=0;col<9;col++){
+                 if(board != NONE){
+                    int piececode = board[row][col];
+                    if(isValidMove(piececode, row, col, jiang.x, jiang.y)){
+                        //播放将军音频
+                        Mix_PlayChannel(-1,jiangjun, 0);
+                    }
+                } 
+            }
+        }
+    }
+// ============================== 
 
 
 // 移动棋子
@@ -312,14 +312,14 @@ bool movePiece(int from_x, int from_y, int to_x, int to_y) {
     
     //我觉得有可能在这里进行将军的判定.  -hu 12.21
     //实现了 -hu 12.22
-    //    static place jiang_place={0,4};
-    //    static place shuai_place={9,4};
+       static place jiang_place={0,4};
+       static place shuai_place={9,4};
 
-    //      shuai_place = *find_shuai(&shuai_place);
-    //      jiang_place = *find_jiang(&jiang_place);
+         shuai_place = *find_shuai(&shuai_place);
+         jiang_place = *find_jiang(&jiang_place);
 
-    //      is_jiangToDeath(jiang_place);
-    //     is_shuaiToDeath(shuai_place);
+         is_jiangToDeath(jiang_place);
+        is_shuaiToDeath(shuai_place);
     return true;
 }
 

@@ -49,13 +49,15 @@ void revokeLastMove() ; // 撤销上一步的移动
 
 void handleBoardClick(int board_x, int board_y) ;//处理棋盘点击事件
 
-// place* find_jiang(place* jiang);
 
-// place* find_shuai(place* shuai);
+//这些是用来判定是否将军的功能 -hu 12.22
+place* find_jiang(place* jiang);
 
-// void is_jiangToDeath(place jiang);
+place* find_shuai(place* shuai);
 
-// void is_shuaiToDeath(place shuai);
+void is_jiangToDeath(place jiang);
+
+void is_shuaiToDeath(place shuai);
 
 
 #endif  // CHESS_MOVE_H
