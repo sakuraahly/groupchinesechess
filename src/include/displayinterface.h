@@ -17,7 +17,7 @@
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
 
-// ==================== 包含数据库头文件 ====================
+//包含自己的头文件
 #include "chess_database.h"
 
 //外部变量的定义
@@ -26,6 +26,10 @@ extern  int board[10][9]; //棋盘数组
 
 extern bool is_music_playing;//背景音乐的判定
 extern Mix_Music* bgm;
+extern Mix_Chunk* choseChess; //捕获音效
+extern Mix_Chunk* eat; //吃子音效
+extern Mix_Chunk* jiangjun;
+//extern Mix_Music* chess_move_sound; //下棋音效
 
 
 
@@ -33,7 +37,7 @@ extern Mix_Music* bgm;
 #define SCREEN_WIDTH  1200
 #define SCREEN_HEIGHT 800
 
-// 棋盘在屏幕上的显示尺寸[没搞懂这个和上面的规则有什么关系]
+// 棋盘在屏幕上的显示尺寸[没搞懂这个和上面的规则有什么关系] -hu 12.05
 #define BOARD_DISPLAY_WIDTH  750
 #define BOARD_DISPLAY_HEIGHT 820
 
@@ -53,7 +57,7 @@ extern Mix_Music* bgm;
 #define GRID_WIDTH 68
 #define GRID_HEIGHT 69
 
-// 游戏状态
+// 游戏状态,判断是否结束了.
 typedef enum {
     MENU_STATE,
     GAME_STATE

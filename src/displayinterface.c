@@ -14,16 +14,24 @@
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
 
-// ==================== 包含数据库头文件 ====================
+//包含数据库头文件,这些都在sr/include目录下 -hu 12.08
 #include "displayinterface.h"
 #include "chess_database.h"
+#include "chess_move.h"
 
-//加载音频文件
+//加载音频文件 注意,这里是播放背景音乐,然后我准备用mixer修复音乐被打断的问题. -hu 12.15
+//顺便,这里也加载走子音频得了,在头文件加入了extern声明 -hu 12.21
 Mix_Music* bgm;
+Mix_Chunk* choseChess;
+Mix_Chunk* eat ;
+Mix_Chunk* jiangjun;
 bool is_music_playing;
 void init_music(){
      bgm = Mix_LoadMUS("res/music/bgm.mp3");
+     choseChess = Mix_LoadWAV("res/music/chose.mp3");
+      eat = Mix_LoadWAV("res/music/eat.mp3");
      is_music_playing = false;
+     jiangjun = Mix_LoadWAV("res/music/jiang.wav");
 }
 
 
@@ -65,9 +73,8 @@ const char* piece_names[28] = {
 
 
 
-// 加载纹理
+// 加载各个图片的,一般不会有问题 -hu 11.18
 SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* path) {
-    //printf("尝试加载图片: %s\n", path);
     SDL_Surface* surface = IMG_Load(path);
     if (!surface) {
         //printf("无法加载图片: %s, 错误: %s\n", path, IMG_GetError());
@@ -76,23 +83,18 @@ SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* path) {
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
     SDL_FreeSurface(surface);
     
-    if (!texture) {
-        //printf("创建纹理失败: %s\n", path);
-    } else {
-        //printf("成功加载图片: %s\n", path);
-    }
     return texture;
 }
 
 
-// 绘制选中指示器
+// 绘制选中指示器{就是黄色的方框}
 void drawSelectedIndicator(SDL_Renderer* renderer) {
     if (is_piece_selected) {
          //Mix_Music* choseChess = Mix_LoadMUS("res/music/chose.mp3");
         int screen_x = GRID_ORIGIN_X + selected_y * GRID_WIDTH - PIECE_SIZE/2;
         int screen_y = GRID_ORIGIN_Y + selected_x * GRID_HEIGHT - PIECE_SIZE/2;
         
-        // 绘制黄色边框表示选中
+        // 绘制黄色边框表示选中 这里还有只能再次点击黄色方框取消的问题 -hu 12.21
         SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
         SDL_Rect rect = {screen_x, screen_y, PIECE_SIZE, PIECE_SIZE};
         SDL_RenderDrawRect(renderer, &rect);
@@ -101,24 +103,11 @@ void drawSelectedIndicator(SDL_Renderer* renderer) {
         SDL_RenderDrawRect(renderer, &(SDL_Rect){screen_x+1, screen_y+1, PIECE_SIZE-2, PIECE_SIZE-2});
         SDL_RenderDrawRect(renderer, &(SDL_Rect){screen_x+2, screen_y+2, PIECE_SIZE-4, PIECE_SIZE-4});
         
+        //-1表示自动选择可用的频道,然后0是播放一次的意思
+        //不行,不能在这里,事件处理循环会让音乐循环播放. -hu 12.21
+        //Mix_PlayChannel(-1, choseChess, 0);
          //Mix_PlayMusic(choseChess, 0);
     }
 }
 
-// 绘制当前玩家指示器
-void drawCurrentPlayerIndicator(SDL_Renderer* renderer) {
-    // 在屏幕右上角显示当前回合
-    SDL_Color text_color = is_red_turn ? (SDL_Color){255, 50, 50, 255} : (SDL_Color){0, 0, 0, 255};
-    const char* text = is_red_turn ? "红方回合" : "黑方回合";
-    
-    // 这里可以添加TTF字体渲染，为了简化，先输出到控制台
-    printf("%s\n", text);
-}
-
-// 绘制游戏信息
-void drawGameInfo(SDL_Renderer* renderer) {
-    // 可以在这里绘制步数、思考时间等信息
-    // 暂时只输出到控制台
-    printf("当前步数: %d, 总步数: %d\n", move_step, current_game.move_count);
-}
 

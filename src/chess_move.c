@@ -12,6 +12,10 @@
 #include "displayinterface.h"
 #include "chess_move.h"
 
+//将和帅的位置
+place jiang;
+place shuai;
+
 // 检查点是否在矩形内
 bool pointInRect(int x, int y, SDL_Rect rect) {
     return (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h);
@@ -90,7 +94,7 @@ int countPiecesInLine(int x1, int y1, int x2, int y2) {
     return count;
 }
 
-// 检查移动是否合法（简化版象棋规则）
+// 检查移动是否合法（简化版象棋规则,没有将军的判定之类的）
 bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y) {
     // 不能原地不动
     if (from_x == to_x && from_y == to_y) return false;
@@ -198,6 +202,64 @@ bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y) {
     }
 }
 
+//寻找将的位置 -hu 12.22
+// place* find_jiang(place* jiang){
+// for(int row=0; row < 3;row++){//来找棋盘上方的将(黑方)
+//             for(int col=3;col<6;col++){
+//                 if (board[row][col] == 21){
+//                     jiang->x = row;
+//                     jiang->y = col;
+//                      return jiang;
+//                 }
+//         }
+//     }
+       
+// }
+// //寻找帅的位置 -hu 12.22
+// place* find_shuai(place* shuai){
+// for(int row=7; row < 10;row++){//来找棋盘下方的帅(红方)
+//             for(int col=3;col<6;col++){
+//                     if (board[row][col] == 11){
+//                             shuai->x = row;
+//                             shuai->y = col;
+//                             return shuai;
+
+//                     }
+//                 }
+//             }
+//         }        
+
+// //判断是否将军,将军就播放音效 -hu 12.22
+// void is_jiangToDeath(place jiang){
+//     for(int row=0; row < 10;row++){
+//             for(int col=0;col<9;col++){
+//                 if(board != NONE){
+//                     int piececode = board[row][col];
+//                     if(isValidMove(piececode, row, col, jiang.x, jiang.y)){
+//                         //播放将军音频
+//                         Mix_PlayChannel(-1,jiangjun, 0);
+//                     }
+//                 } 
+//             }
+//         }
+// }
+// //判断是否将军,将军就播放音效 -hu 12.22
+// void is_shuaiToDeath(place shuai){
+//         for(int row=0; row < 10;row++){
+//             for(int col=0;col<9;col++){
+//                  if(board != NONE){
+//                     int piececode = board[row][col];
+//                     if(isValidMove(piececode, row, col, jiang.x, jiang.y)){
+//                         //播放将军音频
+//                         Mix_PlayChannel(-1,jiangjun, 0);
+//                     }
+//                 } 
+//             }
+//         }
+//     }
+// // ============================== 
+
+
 // 移动棋子
 bool movePiece(int from_x, int from_y, int to_x, int to_y) {
     int piece = board[from_x][from_y];
@@ -206,7 +268,7 @@ bool movePiece(int from_x, int from_y, int to_x, int to_y) {
     
     // 检查移动是否合法
     if (!isValidMove(piece, from_x, from_y, to_x, to_y)) {
-        printf("非法移动！\n");
+        //printf("非法移动！\n");
         return false;
     }
     
@@ -216,9 +278,15 @@ bool movePiece(int from_x, int from_y, int to_x, int to_y) {
     // 执行移动
     board[to_x][to_y] = piece;
     board[from_x][from_y] = NONE;
-    Mix_Music* eat = Mix_LoadMUS("res/music/eat.mp3");
-    Mix_PlayMusic(eat, 0);
-    is_music_playing = false;
+
+    //这里有一个小bug,在displayinterface.h的外部变量只能让src/chess_move.c不报错,但是会导致编译失败 -hu 12.21
+    //解决了 初始化函数作用域的坑 -hu 12.22
+    //Mix_Chunk* eat = Mix_LoadWAV("res/music/eat.mp3");
+
+    Mix_PlayChannel(-1, eat, 0);  //吃子和移动的音效
+
+    //下面这个是原来的解决方案,但是采用多频道播放音效之后就不用这个了 -hu 12.21
+    //is_music_playing = false;
     
     // 生成记谱法
     generateNotation(&current_move, from_x, from_y, to_x, to_y, piece);
@@ -240,21 +308,25 @@ bool movePiece(int from_x, int from_y, int to_x, int to_y) {
     is_red_turn = !is_red_turn;
     move_start_time = time(NULL);
     
-    printf("移动成功！第%d步：%s %s\n", 
-           current_move.step_number, current_move.piece_name, current_move.notation);
+    //printf("移动成功！第%d步：%s %s\n", current_move.step_number, current_move.piece_name, current_move.notation);
     
-    // 检查是否吃子
-    if (captured_piece != NONE) {
-        printf("吃掉了%s！\n", get_piece_name_cn(captured_piece));
-    }
-    
+    //我觉得有可能在这里进行将军的判定.  -hu 12.21
+    //实现了 -hu 12.22
+    //    static place jiang_place={0,4};
+    //    static place shuai_place={9,4};
+
+    //      shuai_place = *find_shuai(&shuai_place);
+    //      jiang_place = *find_jiang(&jiang_place);
+
+    //      is_jiangToDeath(jiang_place);
+    //     is_shuaiToDeath(shuai_place);
     return true;
 }
 
 // 悔棋功能
 void revokeLastMove() {
     if (current_game.move_count == 0) {
-        printf("没有棋步可以悔棋！\n");
+        //printf("没有棋步可以悔棋！\n");
         return;
     }
     
@@ -271,7 +343,7 @@ void revokeLastMove() {
     move_step--;
     is_red_turn = !is_red_turn;
     
-    printf("悔棋成功！恢复第%d步\n", last_move->step_number);
+    //printf("悔棋成功！恢复第%d步\n", last_move->step_number);
 }
 
 // 处理棋盘点击
@@ -281,7 +353,7 @@ void handleBoardClick(int board_x, int board_y) {
     if (!is_piece_selected) {
         // 第一次点击：选择棋子
         if (clicked_piece == NONE) {
-            printf("点击了空位置\n");
+            //printf("点击了空位置\n");
             return;
         }
         
@@ -289,32 +361,32 @@ void handleBoardClick(int board_x, int board_y) {
         int piece_color = getPieceColor(clicked_piece);
         if ((is_red_turn && piece_color != COLOR_RED) ||
             (!is_red_turn && piece_color != COLOR_BLACK)) {
-            printf("现在轮到%s走棋！\n", is_red_turn ? "红方" : "黑方");
+            //printf("现在轮到%s走棋！\n", is_red_turn ? "红方" : "黑方");
             return;
         }
         
         // 选择棋子
         is_piece_selected = true;
-        Mix_Music* choseChess = Mix_LoadMUS("res/music/chose.mp3");
-        Mix_PlayMusic(choseChess, 0);
+
+        //Mix_Music* choseChess = Mix_LoadMUS("res/music/chose.mp3");
+        Mix_PlayChannel(-1,choseChess, 0);
         selected_x = board_x;
         selected_y = board_y;
         selected_piece = clicked_piece;
         
-        printf("选择了%s (%d,%d)\n", 
-               get_piece_name_cn(selected_piece), selected_x, selected_y);
     } else {
         // 第二次点击：移动棋子或取消选择
         if (board_x == selected_x && board_y == selected_y) {
             // 点击同一位置：取消选择
             is_piece_selected = false;
-            printf("取消选择\n");
+            //printf("取消选择\n");
         } else {
             // 尝试移动棋子
             if (movePiece(selected_x, selected_y, board_x, board_y)) {
                 is_piece_selected = false;
             } else {
-                printf("移动失败，请重新选择目标位置\n");
+                //printf("移动失败，请重新选择目标位置\n");
+                return;
             }
         }
     }

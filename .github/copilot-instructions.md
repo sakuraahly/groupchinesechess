@@ -1,5 +1,60 @@
 ## Quick notes for AI coding agents (project: groupchinesechess)
 
+Keep this short — key facts an AI needs to be productive in this repo.
+
+- **Purpose:** small C-language workspace containing standalone example programs and a `src/` set of modules implementing Chinese-chess logic and display.
+
+- **High-level architecture:**
+  - Top-level examples: `main.c`, `learning.c`, `test.c` — each is a standalone program with its own `main()` (runnable as an exe).
+  - Library-like code in `src/`: `game.c`, `displayinterface.c`, `chess_move.c`, `chess_database.c` and headers in `src/include/`. These files implement the game rules, moves, database and display glue.
+  - Assets & outputs: `res/` (fonts/images/music), `output/` (built exes), helper scripts in `scripts/` and `.vscode/scripts/`.
+
+- **Branch & PR rules:**
+  - Do not push directly to `main` without captain approval. Always create feature branches and open PRs for review; document cross-file renames.
+
+- **Build / run (explicit):**
+  - Manual GCC (Bash + MinGW/GCC):
+    - `gcc -o output/main.exe main.c`
+    - `gcc -o output/learning.exe learning.c`
+  - Recommended VS Code tasks (see `.vscode/tasks`):
+    - `Build SDL File` — builds the active file with SDL linking if SDL headers detected.
+    - `build sdl` / `build sdl win` — preconfigured SDL builds for `main.c` variants.
+    - `build all` — runs `./.vscode/scripts/build_all.sh ${workspaceFolder}`.
+  - Runtime: run the produced exe from `output/` (e.g. `./output/main.exe`).
+
+- **Platform & encoding:**
+  - Windows-focused code (uses `windows.h`). Console UTF-8 behavior is centralized — prefer editing `setConsoleOutputCPToUTF8()` (used in `main.c`/`test.c`) instead of adding raw `SetConsole*` calls.
+
+- **Project-specific conventions:**
+  - Files are frequently standalone demos. Keep this pattern unless you deliberately refactor into shared libraries; when you do, add build instructions (Makefile or README changes).
+  - Maintain existing function names within a file (naming inconsistency is normal here). If you rename across files, update all call sites and document in PR.
+  - Randomized algorithms exist (e.g., `randomPartition` in `main.c`); use explicit `srand()` seeds for reproducible tests.
+
+- **Integration points & external deps:**
+  - SDL2: optional — linked via `pkg-config` in tasks or explicit MinGW flags; DLLs are copied by `.vscode/scripts/copy_sdl_dlls.sh`.
+  - Resources: `res/` contains images/fonts/music used by SDL/display code.
+
+- **Key files to inspect first:**
+  - `src/game.c` — main game loop / orchestration
+  - `src/chess_move.c` and `src/chess_database.c` — rules and state
+  - `src/displayinterface.c` — rendering / console helpers
+  - Top-level `main.c`, `learning.c`, `test.c` — usage examples and encoding handling
+
+- **Testing & debugging tips:**
+  - Build with the appropriate task or GCC command, then run `./output/<exe>.exe`.
+  - Add small harnesses in the same `.c` file for quick local checks.
+  - Use MinGW GDB or print-based debugging; many components rely on stdout inspection.
+
+- **PR checklist for AI edits:**
+  - Keep changes minimal and focused per PR.
+  - If adding shared headers/modules, include compile/run instructions in `README.md` or a Makefile and update `.vscode/tasks` if needed.
+  - Avoid committing built binaries; document outputs instead.
+
+Reference files: `README.md`, `main.c`, `learning.c`, `test.c`, `src/game.c`, `src/chess_move.c`, `src/chess_database.c`, `src/displayinterface.c`, `.vscode/scripts/`.
+
+If anything important is missing (preferred MinGW distribution, toolchain PATH, or captain contact), tell me and I'll integrate it.
+## Quick notes for AI coding agents (project: groupchinesechess)
+
 Keep this short and focused — what an AI needs to be productive when editing or extending this repo.
 
 - **Repository purpose:** small C-language group workspace containing standalone example programs (`main.c`, `learning.c`, `test.c`) that demonstrate algorithms (quick sort, string ops) and console handling on Windows.

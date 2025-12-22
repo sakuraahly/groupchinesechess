@@ -17,6 +17,7 @@
 #include "chess_database.h"
 #include "displayinterface.h"
 
+                //致命提醒!!!!!不要删除错误捕获代码,没人知道为什么会错误.
 int main(int argc, char* argv[]) {//塞一个void试试?
 
 
@@ -155,6 +156,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     //        GRID_ORIGIN_X + 4 * GRID_WIDTH, GRID_ORIGIN_Y + 9 * GRID_HEIGHT);
 
     // 主循环,大部分改变要在这里进行
+    //上面的是事件处理循环,下面的是渲染循环 -hu 11.24
     bool running = true;
     while (running) {
         SDL_Event event;
@@ -218,46 +220,23 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                     int board_x, board_y;
                     if (screenToBoard(mouseX, mouseY, &board_x, &board_y)) {
                         handleBoardClick(board_x, board_y);
-                         
+
+                        //判断是否将军,但是有段错误 -hu 12.21
+                        //选择在chess_move实现了 -hu 12.22
+
+            //         place iang_place;
+            //         jiang_place = 
+            //         place shuai_place;
+
+            //              shuai_place=find_shuai(&shuai_place);
+            //              jiang_place=find_jiang(&jiang_place);
+
+            //              is_jiangToDeath(jiang_place);
+            //                 is_shuaiToDeath(shuai_place);
                     }
                 }
             }
-            
-        //     // 按ESC返回菜单
-        //     if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
-        //         if (currentState == GAME_STATE) {
-        //             currentState = MENU_STATE;
-        //             is_piece_selected = false;
-        //         }
-        //     }
-            
-        //     // 按S键保存棋局
-        //     if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_s) {
-        //         if (currentState == GAME_STATE) {
-        //             save_game_to_file(&current_game, "chess_game_record.txt");
-        //         }
-        //     }
-            
-        //     // 按R键悔棋
-        //     if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
-        //         if (currentState == GAME_STATE) {
-        //             revokeLastMove();
-        //         }
-        //     }
-
-        //     // ====== 新增：按D键撤销悔棋 ======
-        //     if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_d) {
-        //         if (currentState == GAME_STATE) {
-        //             printf("撤销悔棋 (快捷键D)\n");
-        //             // TODO: 这里将来实现撤销悔棋功能
-        //             // redoLastMove();
-        //         }
-        //     }
-         }//内层事件处理的while循环的大括号
-
-
-
-
+        }
         //下面就是渲染部分!
         // 清屏
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -341,12 +320,12 @@ int main(int argc, char* argv[]) {//塞一个void试试?
             // 绘制选中指示器
             drawSelectedIndicator(renderer);
             
-            
+            //这两个有空再开发吧 -hu 12.4
             // 绘制当前玩家指示器
-            drawCurrentPlayerIndicator(renderer);
+            //drawCurrentPlayerIndicator(renderer);
             
             // 绘制游戏信息
-            drawGameInfo(renderer);
+            //drawGameInfo(renderer);
 
             // 侧边按钮渲染代码
             // 渲染"回到菜单"按钮
@@ -431,6 +410,6 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     IMG_Quit();
     SDL_Quit();
 
-    printf("游戏退出\n");
+    //printf("游戏退出\n");
     return 0;
-}
+   }
