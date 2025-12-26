@@ -100,6 +100,10 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     // 新增"撤销悔棋"按钮
     SDL_Texture* redo_button = loadTexture(renderer, "res/images/redo_button.png");
 
+    //新加载胜利图片 -hu 12.26
+    SDL_Texture* red_victory_image = loadTexture(renderer, "res/images/red_win.png");
+    SDL_Texture* black_victory_image = loadTexture(renderer, "res/images/black_win.png");
+
     // 创建开始按钮
     SDL_Rect startButtonRect = {
         (SCREEN_WIDTH - 200) / 2,
@@ -138,6 +142,14 @@ int main(int argc, char* argv[]) {//塞一个void试试?
         50    // 高度
     };
 
+    //增加 胜利与失败的图片的位置. -hu 12.26
+    SDL_Rect redVictoryRect = {
+        30,   // 距离左侧30像素
+        560,  // 距离顶部560像素
+        200,  // 宽度
+        200   // 高度
+    };
+
     // 游戏状态
     GameState currentState = MENU_STATE;
     
@@ -163,8 +175,12 @@ int main(int argc, char* argv[]) {//塞一个void试试?
 
          //下面是事件处理循环.
         while (SDL_PollEvent(&event)) {
+            // if (is_jiang_live == false || is_shuai_live == false){
+            //     // 死棋的情况下,不再响应任何走子事件.
+            //     //goto victoryscreen;
+            // }
 
-            //处理背景音乐的问题
+            //处理背景音乐的问题,这个设定大概是无限播放 12.26
           if(is_music_playing == false){
             is_music_playing = true;
             Mix_PlayMusic(bgm, 0);
@@ -218,7 +234,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                     
                     // 检查是否点击了棋盘上的棋子
                     int board_x, board_y;
-                    if (screenToBoard(mouseX, mouseY, &board_x, &board_y)) {
+                    if (screenToBoard(mouseX, mouseY, &board_x, &board_y) && is_shuai_live == true && is_jiang_live == true) {
                         handleBoardClick(board_x, board_y);
 
                         //判断是否将军,但是有段错误 -hu 12.21
@@ -236,7 +252,9 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                     }
                 }
             }
-        }
+        }//这就是走子判定的结尾部分了
+
+        //victoryscreen: //这个是胜利画面的代码,暂时先不写了 -hu 12.26
         //下面就是渲染部分!
         // 清屏
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -377,6 +395,14 @@ int main(int argc, char* argv[]) {//塞一个void试试?
             }
         }
 
+        //这里展示胜败的画面:当然是红方胜利显示红方获胜,反之使是黑方
+        if(is_shuai_live ==true && is_jiang_live == false){
+            SDL_RenderCopy(renderer,red_victory_image, NULL, &redVictoryRect);//最后一个是距离边框的位置
+        }
+        if(is_jiang_live ==true && is_shuai_live == false){
+            SDL_RenderCopy(renderer,black_victory_image, NULL, &redVictoryRect);
+        }
+        
         // 呈现画面
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
@@ -391,6 +417,8 @@ int main(int argc, char* argv[]) {//塞一个void试试?
         Mix_FreeMusic(bgm);
     }
     
+    //这里的统一用SDL_DestroyTexture函数销毁纹理(实际上按照我们的理解翻译成图片资源更好. -hu 12.26)
+
     for (int i = 0; i < 28; i++) {
         if (pieces[i]) SDL_DestroyTexture(pieces[i]);
     }
@@ -403,6 +431,10 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     if (revoke_button) SDL_DestroyTexture(revoke_button);
     if (save_button) SDL_DestroyTexture(save_button);
     if (redo_button) SDL_DestroyTexture(redo_button);
+    if(red_victory_image) SDL_DestroyTexture(red_victory_image);
+    if(black_victory_image) SDL_DestroyTexture(black_victory_image);
+
+
     
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

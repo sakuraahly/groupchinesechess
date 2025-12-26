@@ -16,7 +16,10 @@
 #include "chess_move.h"
 
 //在这里引入所有的音频比较好的
-extern Mix_Chunk* jiangjun;
+//当我没说,现在音频在displayinterface -hu 12.22 
+extern  Mix_Chunk* jiangjun;
+extern  bool is_jiang_live;
+extern bool is_shuai_live;
 
 
 //真有趣,居然在判断将军的时候才用到了这个坐标结构体 hu 12.22
