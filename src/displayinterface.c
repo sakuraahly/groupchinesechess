@@ -90,7 +90,6 @@ SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* path) {
 // 绘制选中指示器{就是黄色的方框}
 void drawSelectedIndicator(SDL_Renderer* renderer) {
     if (is_piece_selected) {
-         //Mix_Music* choseChess = Mix_LoadMUS("res/music/chose.mp3");
         int screen_x = GRID_ORIGIN_X + selected_y * GRID_WIDTH - PIECE_SIZE/2;
         int screen_y = GRID_ORIGIN_Y + selected_x * GRID_HEIGHT - PIECE_SIZE/2;
         

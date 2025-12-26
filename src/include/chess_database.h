@@ -117,4 +117,9 @@ extern bool is_red_turn ;        // 当前轮到红方走棋
 extern int move_step ;              // 当前步数计数器
 extern time_t move_start_time ;     // 当前步开始时间
 
+#define SAVE_FILE "last_game.sav"
+void save_game();
+bool load_game();
+bool has_save();
+
 #endif

@@ -128,22 +128,22 @@ bool screenToBoard(int screen_x, int screen_y, int* board_x, int* board_y) {
     // 计算相对于格点原点的坐标
     int relative_x = screen_x - GRID_ORIGIN_X;
     int relative_y = screen_y - GRID_ORIGIN_Y;
-    
+
     // 检查是否在棋盘范围内
     if (relative_x < -PIECE_SIZE/2 || relative_x >= 9*GRID_WIDTH + PIECE_SIZE/2 ||
         relative_y < -PIECE_SIZE/2 || relative_y >= 10*GRID_HEIGHT + PIECE_SIZE/2) {
         return false;
     }
-    
+
     // 计算最近的格点
     *board_y = (relative_x + GRID_WIDTH/2) / GRID_WIDTH;
     *board_x = (relative_y + GRID_HEIGHT/2) / GRID_HEIGHT;
-    
+
     // 检查坐标是否在有效范围内
     if (*board_x < 0 || *board_x >= 10 || *board_y < 0 || *board_y >= 9) {
         return false;
     }
-    
+
     return true;
 }
 
@@ -156,12 +156,12 @@ bool isSameColor(int piece1, int piece2) {
 // 统计两点之间直线上的棋子数量
 int countPiecesInLine(int x1, int y1, int x2, int y2) {
     int count = 0;
-    
+
     if (x1 == x2) {
         // 同一行
         int start_y = (y1 < y2) ? y1 : y2;
         int end_y = (y1 < y2) ? y2 : y1;
-        
+
         for (int y = start_y + 1; y < end_y; y++) {
             if (board[x1][y] != NONE) {
                 count++;
@@ -171,14 +171,14 @@ int countPiecesInLine(int x1, int y1, int x2, int y2) {
         // 同一列
         int start_x = (x1 < x2) ? x1 : x2;
         int end_x = (x1 < x2) ? x2 : x1;
-        
+
         for (int x = start_x + 1; x < end_x; x++) {
             if (board[x][y1] != NONE) {
                 count++;
             }
         }
     }
-    
+
     return count;
 }
 
@@ -194,7 +194,7 @@ bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y) {
     if (board[to_x][to_y] != NONE && isSameColor(piece_code, board[to_x][to_y])) {
         return false;
     }
-    
+
     int color = getPieceColor(piece_code);
     int type = getPieceType(piece_code);
     int dx = to_x - from_x;
@@ -331,7 +331,7 @@ bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y) {
                 if (board[from_x][block_y] != NONE) return false;
             }
             return true;
-            
+
         case TYPE_JU:     // 车
         //这是为了修复飞将的bug -hu 12.26
         // if(blackFlyToWin == true && to_x == shuai_place.x && to_y == shuai_place.y){
@@ -345,7 +345,7 @@ bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y) {
             // 路径上不能有其他棋子
             if (countPiecesInLine(from_x, from_y, to_x, to_y) > 0) return false;
             return true;
-            
+
         case TYPE_PAO:    // 炮
         //这是为了修复飞将的bug -hu 12.26
         // if(blackFlyToWin == true && to_x == shuai_place.x && to_y == shuai_place.y){
@@ -363,7 +363,7 @@ bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y) {
             } else {
                 return pieces_count == 0;
             }
-            
+
         case TYPE_BING:   // 兵/卒
         // //这是为了修复飞将的bug -hu 12.26
         // if(blackFlyToWin == true && to_x == shuai_place.x && to_y == shuai_place.y){
@@ -388,7 +388,7 @@ bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y) {
                 if (color == COLOR_BLACK && from_x <= 4) return false; // 黑卒没过河
             }
             return true;
-            
+
         default:
             return false;
     }
@@ -421,14 +421,13 @@ bool movePiece(int from_x, int from_y, int to_x, int to_y) {
     generateNotation(&current_move, from_x, from_y, to_x, to_y, piece);
     
     // 初始化棋步记录
-    init_chess_move(&current_move, move_step, piece, 
-                   current_move.notation, from_x, from_y, to_x, to_y);
-    
+    init_chess_move(&current_move, move_step, piece, current_move.notation, from_x, from_y, to_x, to_y);
+
     // 计算思考时间
     if (move_start_time > 0) {
         current_move.thinking_time = (int)(time(NULL) - move_start_time);
     }
-    
+
     // 添加到棋局记录
     add_move_to_game(&current_game, &current_move);
     
@@ -534,14 +533,14 @@ void revokeLastMove() {
 // 处理棋盘点击
 void handleBoardClick(int board_x, int board_y) {
     int clicked_piece = board[board_x][board_y];
-    
+
     if (!is_piece_selected) {
         // 第一次点击：选择棋子
         if (clicked_piece == NONE) {
             //printf("点击了空位置\n");
             return;
         }
-        
+
         // 检查是否轮到该棋子走
         int piece_color = getPieceColor(clicked_piece);
         if ((is_red_turn && piece_color != COLOR_RED) ||
@@ -549,7 +548,7 @@ void handleBoardClick(int board_x, int board_y) {
             //printf("现在轮到%s走棋！\n", is_red_turn ? "红方" : "黑方");
             return;
         }
-        
+
         // 选择棋子
         is_piece_selected = true;
 

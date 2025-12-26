@@ -63,4 +63,5 @@ void is_jiangToDeath(place jiang);
 void is_shuaiToDeath(place shuai);
 
 
+
 #endif  // CHESS_MOVE_H
