@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
         return -1;
     }
 
-    // 创建窗口和渲染器
+    // 创建窗口和渲染器(可以改变显示框顶部的标题)
     SDL_Window* window = SDL_CreateWindow("中国象棋", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                           SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window) {//强调一下,这个创建失败是出现一个空指针,NULL在bool上是false的等价.
@@ -395,7 +395,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
             }
         }
 
-        //这里展示胜败的画面:当然是红方胜利显示红方获胜,反之使是黑方
+        //这里展示胜败的画面:当然是红方胜利显示红方获胜,反之则是黑方  //-hu 12.26
         if(is_shuai_live ==true && is_jiang_live == false){
             SDL_RenderCopy(renderer,red_victory_image, NULL, &redVictoryRect);//最后一个是距离边框的位置
         }
