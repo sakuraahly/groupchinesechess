@@ -128,6 +128,8 @@ int main(int argc, char *argv[])
     SDL_Texture *red_victory_image = loadTexture(renderer, "res/images/red_win.png");
     SDL_Texture *black_victory_image = loadTexture(renderer, "res/images/black_win.png");
 
+    // 新增继续游戏图片 -hu 12.26
+    SDL_Texture *continue_image = loadTexture(renderer, "res/images/continue_image.png");
     // 创建开始按钮
     SDL_Rect startButtonRect = {
         (SCREEN_WIDTH - 200) / 2,
@@ -245,24 +247,25 @@ int main(int argc, char *argv[])
                     // 初始化棋局记录
                     init_game_record(&current_game, "GAME001", "红方玩家", "黑方玩家");
                     move_start_time = time(NULL);
-                    // printf("新游戏开始！红方先走。\n");
-                    // 初始化棋局记录
-                    init_game_record(&current_game, "GAME001", "红方玩家", "黑方玩家");
-                    move_start_time = time(NULL);
-                    // printf("新游戏开始！红方先走。\n");
-                    // 重置游戏状态（确保新游戏从干净状态开始）
+                    // 重置游戏状态（确保新游戏从干净状态开始）//注意,将帅活着,红先走 -hu 12.27
                     is_shuai_live = true;
                     is_jiang_live = true;
                     redFlyToWin = false;
                     blackFlyToWin = false;
-                    printf("新游戏开始！红方先走。\n");
-                }
+                    is_red_turn = true;
+                                }
 
                 // 菜单状态下点击特色模式按钮 -hu 12.27
                 if (currentState == MENU_STATE && pointInRect(mouseX, mouseY, specialModeRect))
                 {
                     currentState = SPECIAL_MODE_STATE;
                     restoreBoardToStandardState();
+                    // 重置游戏状态（确保新游戏从干净状态开始）//注意,将帅活着,红先走 -hu 12.27
+                    is_shuai_live = true;
+                    is_jiang_live = true;
+                    redFlyToWin = false;
+                    blackFlyToWin = false;
+                    is_red_turn = true;
                     // 特色模式是除了将和帅在得那两行,其余的都是兵和卒
                     for (int x = 1; x < 5; x++)
                     {
@@ -424,6 +427,18 @@ int main(int argc, char *argv[])
                 SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
                 SDL_RenderDrawRect(renderer, &startButtonRect);
             }
+            // 渲染继续游戏按钮 -hu 12.27
+            if (continue_image)
+            {
+                SDL_RenderCopy(renderer, continue_image, NULL, &continueButtonRect);
+            }
+            else
+            {
+                SDL_SetRenderDrawColor(renderer, 0, 150, 200, 255);
+                SDL_RenderFillRect(renderer, &specialModeRect);
+                SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+                SDL_RenderDrawRect(renderer, &specialModeRect);
+            }
 
             // 特色模式按钮 -hu 12.27
             if (special_mode)
@@ -442,314 +457,293 @@ int main(int argc, char *argv[])
         // 渲染普通模式游戏界面 -hu 12.27
         else if (currentState == GAME_STATE)
         {
+
+            // 渲染游戏界面
             if (background)
             {
-                // 新增：渲染"继续游戏"按钮（如果有存档）
-                if (has_save())
-                {
-                    if (continue_button)
-                    {
-                        SDL_RenderCopy(renderer, continue_button, NULL, &continueButtonRect);
-                    }
-                    else
-                    {
-                        // 如果图标加载失败，绘制默认按钮
-                        SDL_SetRenderDrawColor(renderer, 100, 150, 200, 255); // 蓝色
-                        SDL_RenderFillRect(renderer, &continueButtonRect);
-                        // 绘制边框
-                        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-                        SDL_RenderDrawRect(renderer, &continueButtonRect);
-                    }
-                }
+                SDL_RenderCopy(renderer, background, NULL, NULL);
             }
             else
             {
-                // 渲染游戏界面
-                if (background)
-                {
-                    SDL_RenderCopy(renderer, background, NULL, NULL);
-                }
-                else
-                {
-                    SDL_SetRenderDrawColor(renderer, 50, 50, 100, 255);
-                    SDL_RenderClear(renderer);
-                }
+                SDL_SetRenderDrawColor(renderer, 50, 50, 100, 255);
+                SDL_RenderClear(renderer);
+            }
 
-                // 渲染棋盘（使用棋盘显示位置）
-                if (chess_board)
-                {
-                    SDL_Rect boardRect = {
-                        BOARD_VISUAL_X,
-                        BOARD_VISUAL_Y,
-                        BOARD_DISPLAY_WIDTH,
-                        BOARD_DISPLAY_HEIGHT};
-                    SDL_RenderCopy(renderer, chess_board, NULL, &boardRect);
-                }
-                else
-                {
-                    // 如果没有棋盘图片，绘制简单棋盘
-                    SDL_SetRenderDrawColor(renderer, 210, 180, 140, 255);
-                    SDL_Rect boardRect = {
-                        BOARD_VISUAL_X,
-                        BOARD_VISUAL_Y,
-                        BOARD_DISPLAY_WIDTH,
-                        BOARD_DISPLAY_HEIGHT};
-                    SDL_RenderFillRect(renderer, &boardRect);
-                }
+            // 渲染棋盘（使用棋盘显示位置）
+            if (chess_board)
+            {
+                SDL_Rect boardRect = {
+                    BOARD_VISUAL_X,
+                    BOARD_VISUAL_Y,
+                    BOARD_DISPLAY_WIDTH,
+                    BOARD_DISPLAY_HEIGHT};
+                SDL_RenderCopy(renderer, chess_board, NULL, &boardRect);
+            }
+            else
+            {
+                // 如果没有棋盘图片，绘制简单棋盘
+                SDL_SetRenderDrawColor(renderer, 210, 180, 140, 255);
+                SDL_Rect boardRect = {
+                    BOARD_VISUAL_X,
+                    BOARD_VISUAL_Y,
+                    BOARD_DISPLAY_WIDTH,
+                    BOARD_DISPLAY_HEIGHT};
+                SDL_RenderFillRect(renderer, &boardRect);
+            }
 
-                // 绘制棋子 - 使用独立的格点坐标系
-                int pieceCount = 0;
-                for (int x = 0; x < 10; x++)
-                { // 行 (x: 0-9)
-                    for (int y = 0; y < 9; y++)
-                    { // 列 (y: 0-8)
-                        int piece = board[x][y];
-                        if (piece != NONE)
+            // 绘制棋子 - 使用独立的格点坐标系
+            int pieceCount = 0;
+            for (int x = 0; x < 10; x++)
+            { // 行 (x: 0-9)
+                for (int y = 0; y < 9; y++)
+                { // 列 (y: 0-8)
+                    int piece = board[x][y];
+                    if (piece != NONE)
+                    {
+                        pieceCount++;
+
+                        if (piece >= 11 && piece <= 27 && pieces[piece])
                         {
-                            pieceCount++;
+                            // 使用格点坐标系计算棋子位置（与棋盘显示位置无关）
+                            int screen_x = GRID_ORIGIN_X + y * GRID_WIDTH - PIECE_SIZE / 2;
+                            int screen_y = GRID_ORIGIN_Y + x * GRID_HEIGHT - PIECE_SIZE / 2;
 
-                            if (piece >= 11 && piece <= 27 && pieces[piece])
-                            {
-                                // 使用格点坐标系计算棋子位置（与棋盘显示位置无关）
-                                int screen_x = GRID_ORIGIN_X + y * GRID_WIDTH - PIECE_SIZE / 2;
-                                int screen_y = GRID_ORIGIN_Y + x * GRID_HEIGHT - PIECE_SIZE / 2;
-
-                                SDL_Rect dest = {screen_x, screen_y, PIECE_SIZE, PIECE_SIZE};
-                                SDL_RenderCopy(renderer, pieces[piece], NULL, &dest);
-                            }
-                            else
-                            {
-                                // 棋子纹理加载失败，绘制占位矩形
-                                int screen_x = GRID_ORIGIN_X + y * GRID_WIDTH - PIECE_SIZE / 2;
-                                int screen_y = GRID_ORIGIN_Y + x * GRID_HEIGHT - PIECE_SIZE / 2;
-                                SDL_Rect dest = {screen_x, screen_y, PIECE_SIZE, PIECE_SIZE};
-                                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-                                SDL_RenderFillRect(renderer, &dest);
-                            }
+                            SDL_Rect dest = {screen_x, screen_y, PIECE_SIZE, PIECE_SIZE};
+                            SDL_RenderCopy(renderer, pieces[piece], NULL, &dest);
+                        }
+                        else
+                        {
+                            // 棋子纹理加载失败，绘制占位矩形
+                            int screen_x = GRID_ORIGIN_X + y * GRID_WIDTH - PIECE_SIZE / 2;
+                            int screen_y = GRID_ORIGIN_Y + x * GRID_HEIGHT - PIECE_SIZE / 2;
+                            SDL_Rect dest = {screen_x, screen_y, PIECE_SIZE, PIECE_SIZE};
+                            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                            SDL_RenderFillRect(renderer, &dest);
                         }
                     }
-                }
-            } // 这里是普通模式的结尾部分 -hu 12.22
-
-            if (currentState == SPECIAL_MODE_STATE)
-            {
-                // 绘制背景图片
-                if (background)
-                {
-                    SDL_RenderCopy(renderer, background, NULL, NULL);
-                }
-                else
-                {
-                    SDL_SetRenderDrawColor(renderer, 50, 50, 100, 255);
-                    SDL_RenderClear(renderer);
-                }
-
-                // 渲染棋盘（使用棋盘显示位置）
-                if (chess_board)
-                {
-                    SDL_Rect boardRect = {
-                        BOARD_VISUAL_X,
-                        BOARD_VISUAL_Y,
-                        BOARD_DISPLAY_WIDTH,
-                        BOARD_DISPLAY_HEIGHT};
-                    SDL_RenderCopy(renderer, chess_board, NULL, &boardRect);
-                }
-                else
-                {
-                    // 如果没有棋盘图片，绘制简单棋盘
-                    SDL_SetRenderDrawColor(renderer, 210, 180, 140, 255);
-                    SDL_Rect boardRect = {
-                        BOARD_VISUAL_X,
-                        BOARD_VISUAL_Y,
-                        BOARD_DISPLAY_WIDTH,
-                        BOARD_DISPLAY_HEIGHT};
-                    SDL_RenderFillRect(renderer, &boardRect);
-                }
-                // 绘制棋子 - 使用独立的格点坐标系  //特色模式下,除了将帅在的那一行,都是充满了兵和卒子
-                int pieceCount = 0;
-                // 棋盘的上半部分除了将在的那一行改成黑色的卒子
-
-                for (int x = 0; x < 10; x++)
-                { // 行 (x: 0-9)
-                    for (int y = 0; y < 9; y++)
-                    { // 列 (y: 0-8)
-                        int piece = board[x][y];
-                        if (piece != NONE)
-                        {
-                            pieceCount++;
-
-                            if (piece >= 11 && piece <= 27 && pieces[piece])
-                            {
-                                // 使用格点坐标系计算棋子位置（与棋盘显示位置无关）
-                                int screen_x = GRID_ORIGIN_X + y * GRID_WIDTH - PIECE_SIZE / 2;
-                                int screen_y = GRID_ORIGIN_Y + x * GRID_HEIGHT - PIECE_SIZE / 2;
-
-                                SDL_Rect dest = {screen_x, screen_y, PIECE_SIZE, PIECE_SIZE};
-                                SDL_RenderCopy(renderer, pieces[piece], NULL, &dest);
-                            }
-                            else
-                            {
-                                // 棋子纹理加载失败，绘制占位矩形
-                                int screen_x = GRID_ORIGIN_X + y * GRID_WIDTH - PIECE_SIZE / 2;
-                                int screen_y = GRID_ORIGIN_Y + x * GRID_HEIGHT - PIECE_SIZE / 2;
-                                SDL_Rect dest = {screen_x, screen_y, PIECE_SIZE, PIECE_SIZE};
-                                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-                                SDL_RenderFillRect(renderer, &dest);
-                            }
-                        }
-                    }
-                }
-            } // 这里是特色模式的结尾部分 -hu 12.27
-
-            // 下面是游戏模式通用的绘制的图片的模式
-
-            // 绘制选中指示器
-            drawSelectedIndicator(renderer);
-
-            // 这两个有空再开发吧 -hu 12.4
-            //  绘制当前玩家指示器
-            // drawCurrentPlayerIndicator(renderer);
-
-            // 绘制游戏信息
-            // drawGameInfo(renderer);
-
-            // 侧边按钮渲染代码
-            // 渲染"回到菜单"按钮
-            if (currentState != MENU_STATE)
-            {
-                if (return_button && currentState)
-                {
-                    SDL_RenderCopy(renderer, return_button, NULL, &returnButtonRect);
-                }
-                else
-                {
-                    // 如果图标加载失败，绘制默认按钮
-                    SDL_SetRenderDrawColor(renderer, 200, 50, 50, 255);
-                    SDL_RenderFillRect(renderer, &returnButtonRect);
-                    // 绘制边框
-                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-                    SDL_RenderDrawRect(renderer, &returnButtonRect);
-                }
-
-                // 渲染"悔棋"按钮
-                if (revoke_button && currentState)
-                {
-                    SDL_RenderCopy(renderer, revoke_button, NULL, &revokeButtonRect);
-                }
-                else
-                {
-                    // 如果图标加载失败，绘制默认按钮
-                    SDL_SetRenderDrawColor(renderer, 50, 50, 200, 255);
-                    SDL_RenderFillRect(renderer, &revokeButtonRect);
-                    // 绘制边框
-                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-                    SDL_RenderDrawRect(renderer, &revokeButtonRect);
-                }
-
-                // 渲染"保存棋局"按钮
-                if (save_button && currentState)
-                {
-                    SDL_RenderCopy(renderer, save_button, NULL, &saveButtonRect);
-                }
-                else
-                {
-                    // 如果图标加载失败，绘制默认按钮
-                    SDL_SetRenderDrawColor(renderer, 50, 200, 50, 255);
-                    SDL_RenderFillRect(renderer, &saveButtonRect);
-                    // 绘制边框
-                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-                    SDL_RenderDrawRect(renderer, &saveButtonRect);
-                }
-
-                // ====== 新增：渲染"撤销悔棋"按钮 ======
-                if (redo_button && currentState)
-                {
-                    SDL_RenderCopy(renderer, redo_button, NULL, &redoButtonRect);
-                }
-                else
-                {
-                    // 如果图标加载失败，绘制默认按钮
-                    SDL_SetRenderDrawColor(renderer, 200, 150, 50, 255); // 橙色
-                    SDL_RenderFillRect(renderer, &redoButtonRect);
-                    // 绘制边框
-                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-                    SDL_RenderDrawRect(renderer, &redoButtonRect);
-                }
-
-                // 这里展示胜败的画面:当然是红方胜利显示红方获胜,反之则是黑方  //-hu 12.26
-                if (is_shuai_live == true && is_jiang_live == false && currentState)
-                {
-                    SDL_RenderCopy(renderer, red_victory_image, NULL, &redVictoryRect); // 最后一个是距离边框的位置
-                }
-                // 下面这个只是为了保障音效只播放一次,不能插在上面 // -hu 12.27
-                if (is_shuai_live == true && is_jiang_live == false && play_winsound == true && currentState)
-                {
-                    Mix_PlayChannel(-1, win, 0);
-                    // *play_winsound_ptr = false;
-                    *play_winsound_ptr = false;
-                }
-                if (is_jiang_live == true && is_shuai_live == false && currentState)
-                {
-                    SDL_RenderCopy(renderer, black_victory_image, NULL, &redVictoryRect);
-                }
-                if (is_jiang_live == true && is_shuai_live == false && play_winsound == true && currentState)
-                {
-                    Mix_PlayChannel(-1, win, 0);
-                    // *play_winsound_ptr = false;
-                    *play_winsound_ptr = false;
                 }
             }
-            // 呈现画面
-            SDL_RenderPresent(renderer);
-            SDL_Delay(16);
-        }
+        } // 这里是普通模式的结尾部分 -hu 12.22
 
-        // 清理资源
-        // printf("清理资源...\n");
-        if (bgm)
+        if (currentState == SPECIAL_MODE_STATE)
         {
-            Mix_HaltMusic();
-            Mix_FreeMusic(bgm);
-        }
+            // 绘制背景图片
+            if (background)
+            {
+                SDL_RenderCopy(renderer, background, NULL, NULL);
+            }
+            else
+            {
+                SDL_SetRenderDrawColor(renderer, 50, 50, 100, 255);
+                SDL_RenderClear(renderer);
+            }
 
-        // 这里的统一用SDL_DestroyTexture函数销毁纹理(实际上按照我们的理解翻译成图片资源更好. -hu 12.26)
+            // 渲染棋盘（使用棋盘显示位置）
+            if (chess_board)
+            {
+                SDL_Rect boardRect = {
+                    BOARD_VISUAL_X,
+                    BOARD_VISUAL_Y,
+                    BOARD_DISPLAY_WIDTH,
+                    BOARD_DISPLAY_HEIGHT};
+                SDL_RenderCopy(renderer, chess_board, NULL, &boardRect);
+            }
+            else
+            {
+                // 如果没有棋盘图片，绘制简单棋盘
+                SDL_SetRenderDrawColor(renderer, 210, 180, 140, 255);
+                SDL_Rect boardRect = {
+                    BOARD_VISUAL_X,
+                    BOARD_VISUAL_Y,
+                    BOARD_DISPLAY_WIDTH,
+                    BOARD_DISPLAY_HEIGHT};
+                SDL_RenderFillRect(renderer, &boardRect);
+            }
+            // 绘制棋子 - 使用独立的格点坐标系  //特色模式下,除了将帅在的那一行,都是充满了兵和卒子
+            int pieceCount = 0;
+            // 棋盘的上半部分除了将在的那一行改成黑色的卒子
 
-        for (int i = 0; i < 28; i++)
+            for (int x = 0; x < 10; x++)
+            { // 行 (x: 0-9)
+                for (int y = 0; y < 9; y++)
+                { // 列 (y: 0-8)
+                    int piece = board[x][y];
+                    if (piece != NONE)
+                    {
+                        pieceCount++;
+
+                        if (piece >= 11 && piece <= 27 && pieces[piece])
+                        {
+                            // 使用格点坐标系计算棋子位置（与棋盘显示位置无关）
+                            int screen_x = GRID_ORIGIN_X + y * GRID_WIDTH - PIECE_SIZE / 2;
+                            int screen_y = GRID_ORIGIN_Y + x * GRID_HEIGHT - PIECE_SIZE / 2;
+
+                            SDL_Rect dest = {screen_x, screen_y, PIECE_SIZE, PIECE_SIZE};
+                            SDL_RenderCopy(renderer, pieces[piece], NULL, &dest);
+                        }
+                        else
+                        {
+                            // 棋子纹理加载失败，绘制占位矩形
+                            int screen_x = GRID_ORIGIN_X + y * GRID_WIDTH - PIECE_SIZE / 2;
+                            int screen_y = GRID_ORIGIN_Y + x * GRID_HEIGHT - PIECE_SIZE / 2;
+                            SDL_Rect dest = {screen_x, screen_y, PIECE_SIZE, PIECE_SIZE};
+                            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                            SDL_RenderFillRect(renderer, &dest);
+                        }
+                    }
+                }
+            }
+        } // 这里是特色模式的结尾部分 -hu 12.27
+
+        // 下面是游戏模式通用的绘制的图片的模式
+
+        // 绘制选中指示器
+        drawSelectedIndicator(renderer);
+
+        // 这两个有空再开发吧 -hu 12.4
+        //  绘制当前玩家指示器
+        // drawCurrentPlayerIndicator(renderer);
+
+        // 绘制游戏信息
+        // drawGameInfo(renderer);
+
+        // 侧边按钮渲染代码
+        // 渲染"回到菜单"按钮
+        if (currentState != MENU_STATE)
         {
-            if (pieces[i])
-                SDL_DestroyTexture(pieces[i]);
+            if (return_button && currentState)
+            {
+                SDL_RenderCopy(renderer, return_button, NULL, &returnButtonRect);
+            }
+            else
+            {
+                // 如果图标加载失败，绘制默认按钮
+                SDL_SetRenderDrawColor(renderer, 200, 50, 50, 255);
+                SDL_RenderFillRect(renderer, &returnButtonRect);
+                // 绘制边框
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                SDL_RenderDrawRect(renderer, &returnButtonRect);
+            }
+
+            // 渲染"悔棋"按钮
+            if (revoke_button && currentState)
+            {
+                SDL_RenderCopy(renderer, revoke_button, NULL, &revokeButtonRect);
+            }
+            else
+            {
+                // 如果图标加载失败，绘制默认按钮
+                SDL_SetRenderDrawColor(renderer, 50, 50, 200, 255);
+                SDL_RenderFillRect(renderer, &revokeButtonRect);
+                // 绘制边框
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                SDL_RenderDrawRect(renderer, &revokeButtonRect);
+            }
+
+            // 渲染"保存棋局"按钮
+            if (save_button && currentState)
+            {
+                SDL_RenderCopy(renderer, save_button, NULL, &saveButtonRect);
+            }
+            else
+            {
+                // 如果图标加载失败，绘制默认按钮
+                SDL_SetRenderDrawColor(renderer, 50, 200, 50, 255);
+                SDL_RenderFillRect(renderer, &saveButtonRect);
+                // 绘制边框
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                SDL_RenderDrawRect(renderer, &saveButtonRect);
+            }
+
+            // ====== 新增：渲染"撤销悔棋"按钮 ======
+            if (redo_button && currentState)
+            {
+                SDL_RenderCopy(renderer, redo_button, NULL, &redoButtonRect);
+            }
+            else
+            {
+                // 如果图标加载失败，绘制默认按钮
+                SDL_SetRenderDrawColor(renderer, 200, 150, 50, 255); // 橙色
+                SDL_RenderFillRect(renderer, &redoButtonRect);
+                // 绘制边框
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                SDL_RenderDrawRect(renderer, &redoButtonRect);
+            }
+
+            // 这里展示胜败的画面:当然是红方胜利显示红方获胜,反之则是黑方  //-hu 12.26
+            if (is_shuai_live == true && is_jiang_live == false && currentState)
+            {
+                SDL_RenderCopy(renderer, red_victory_image, NULL, &redVictoryRect); // 最后一个是距离边框的位置
+            }
+            // 下面这个只是为了保障音效只播放一次,不能插在上面 // -hu 12.27
+            if (is_shuai_live == true && is_jiang_live == false && play_winsound == true && currentState)
+            {
+                Mix_PlayChannel(-1, win, 0);
+                // *play_winsound_ptr = false;
+                *play_winsound_ptr = false;
+            }
+            if (is_jiang_live == true && is_shuai_live == false && currentState)
+            {
+                SDL_RenderCopy(renderer, black_victory_image, NULL, &redVictoryRect);
+            }
+            if (is_jiang_live == true && is_shuai_live == false && play_winsound == true && currentState)
+            {
+                Mix_PlayChannel(-1, win, 0);
+                // *play_winsound_ptr = false;
+                *play_winsound_ptr = false;
+            }
         }
-        if (background)
-            SDL_DestroyTexture(background);
-        if (chess_board)
-            SDL_DestroyTexture(chess_board);
-        if (start_button)
-            SDL_DestroyTexture(start_button);
+        // 呈现画面
+        SDL_RenderPresent(renderer);
+        SDL_Delay(16);
+    }
 
-        // 清理侧边按钮纹理
-        if (return_button)
-            SDL_DestroyTexture(return_button);
-        if (revoke_button)
-            SDL_DestroyTexture(revoke_button);
-        if (save_button)
-            SDL_DestroyTexture(save_button);
-        if (redo_button)
-            SDL_DestroyTexture(redo_button);
-        if (red_victory_image)
-            SDL_DestroyTexture(red_victory_image);
-        if (black_victory_image)
-            SDL_DestroyTexture(black_victory_image);
+    // 清理资源
+    // printf("清理资源...\n");
+    if (bgm)
+    {
+        Mix_HaltMusic();
+        Mix_FreeMusic(bgm);
+    }
 
-        // 清理继续游戏按钮纹理
-        if (continue_button)
-            SDL_DestroyTexture(continue_button);
+    // 这里的统一用SDL_DestroyTexture函数销毁纹理(实际上按照我们的理解翻译成图片资源更好. -hu 12.26)
 
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        Mix_CloseAudio();
-        IMG_Quit();
-        SDL_Quit();
+    for (int i = 0; i < 28; i++)
+    {
+        if (pieces[i])
+            SDL_DestroyTexture(pieces[i]);
+    }
+    if (background)
+        SDL_DestroyTexture(background);
+    if (chess_board)
+        SDL_DestroyTexture(chess_board);
+    if (start_button)
+        SDL_DestroyTexture(start_button);
 
-        // printf("游戏退出\n");
-        return 0;
-    } // 游戏主函数结尾的花括号
+    // 清理侧边按钮纹理
+    if (return_button)
+        SDL_DestroyTexture(return_button);
+    if (revoke_button)
+        SDL_DestroyTexture(revoke_button);
+    if (save_button)
+        SDL_DestroyTexture(save_button);
+    if (redo_button)
+        SDL_DestroyTexture(redo_button);
+    if (red_victory_image)
+        SDL_DestroyTexture(red_victory_image);
+    if (black_victory_image)
+        SDL_DestroyTexture(black_victory_image);
+
+    // 清理继续游戏按钮纹理
+    if (continue_button)
+        SDL_DestroyTexture(continue_button);
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    Mix_CloseAudio();
+    IMG_Quit();
+    SDL_Quit();
+
+    // printf("游戏退出\n");
+    return 0;
+} // 游戏主函数结尾的花括号

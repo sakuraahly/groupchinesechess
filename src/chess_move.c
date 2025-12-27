@@ -494,9 +494,6 @@ bool movePiece(int from_x, int from_y, int to_x, int to_y)
     // 记录被吃掉的棋子
     int captured_piece = board[to_x][to_y];
 
-    // 判定这个目前移动的棋子是哪一方的. -hu 12.26
-    int color = getPieceColor(piece);
-
     // 直接使用上面定义的captured_piece变量记录移动的棋子
     current_move.captured_piece = captured_piece;
 
