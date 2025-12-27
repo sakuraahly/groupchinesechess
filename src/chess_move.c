@@ -89,7 +89,7 @@ void is_shuaiToDeath(place shuai){
 int isFlyToDeath(place shuai,place jiang){
     if(shuai.y == jiang.y){
         //countPiecesInLine 返回的是中间棋子的具体个数
-        if(!countPiecesInLine(shuai.x,shuai.y,jiang.x,jiang.y)){
+        if(countPiecesInLine(shuai.x,shuai.y,jiang.x,jiang.y)==0){
             return 1; //代表可以白脸将
         }
     }
@@ -406,7 +406,7 @@ bool movePiece(int from_x, int from_y, int to_x, int to_y) {
         return false;
     }
     //判定这个目前移动的棋子是哪一方的. -hu 12.26
-    int color = getPieceColor(board[from_x][from_y]/10);
+    int color = getPieceColor(piece);
     // 记录移动棋子的信息.
     int captured_piece = board[to_x][to_y];
 
@@ -482,15 +482,17 @@ if(is_jiang_live == true && is_shuai_live == true){
          if(isFlyToDeath(shuai_place,jiang_place)==1){
             if (color == COLOR_RED){
                 *blackFlyToWinPtr = true;
+                *redFlyToWinPtr = false;
             }else{
                 *redFlyToWinPtr = true;
+                *blackFlyToWinPtr = false;
             }
          }else{ //重置白脸将军判定
             *blackFlyToWinPtr = false;
             *redFlyToWinPtr = false;
          }
 
-         // 只在当前回合检查对方是否将军
+         // 只在当前回合检查对方是否将军//似乎没有发挥应有的作用 -hu 12.28
         if (color == COLOR_RED) {  // 红方刚走完
             // 检查黑将是否被将军
             is_jiangToDeath(jiang_place);
@@ -500,6 +502,8 @@ if(is_jiang_live == true && is_shuai_live == true){
         }
         //对,就是这个先修改判定条件再判定将军是致胜的关键. // -hu 12.26
         //但是又出现了第一次飞将判定不能吃将的bug.
+        //虽然不知道为什么,但是似乎只有这两个才是正常工作的 -hu 12.27
+        //好吧,现在是能正常运转了,就不管这些东西了. -hu 12.27
         is_jiangToDeath(jiang_place);
          is_shuaiToDeath(shuai_place);
     }

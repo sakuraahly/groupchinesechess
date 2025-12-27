@@ -1,5 +1,5 @@
-//注意,到时候估计打包时外部链接资源(图片,音乐等)的路径又要改,先插个眼.
-//要把这个文件和res文件放到同一个目录下 --luo
+// 注意,到时候估计打包时外部链接资源(图片,音乐等)的路径又要改,先插个眼.
+// 要把这个文件和res文件放到同一个目录下 --luo
 #ifndef DISPLAYINTERFACE_H
 #define DISPLAYINTERFACE_H
 
@@ -12,33 +12,32 @@
 #include <ctype.h>
 #include <time.h>
 #include <SDL2/SDL.h>
-//#include <SDL2/SDL_main.h> //总之在目前的开发中不需要就是了
+// #include <SDL2/SDL_main.h> //总之在目前的开发中不需要就是了
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
 
-//包含自己的头文件
+// 包含自己的头文件
 #include "chess_database.h"
 
-//外部变量的定义
-extern const char* piece_names[28]; //棋子图片路径数组
-extern  int board[10][9]; //棋盘数组
+// 外部变量的定义
+extern const char *piece_names[28]; // 棋子图片路径数组
+extern int board[10][9];            // 棋盘数组
 
-extern bool is_music_playing;//背景音乐的判定
-extern Mix_Music* bgm;
-extern Mix_Chunk* choseChess; //捕获音效
-extern Mix_Chunk* eat; //吃子音效
-extern Mix_Chunk* jiangjun;
-//extern Mix_Music* chess_move_sound; //下棋音效
-
-
+extern bool is_music_playing; // 背景音乐的判定
+extern Mix_Music *bgm;
+extern Mix_Chunk *choseChess; // 捕获音效
+extern Mix_Chunk *eat;        // 吃子音效
+extern Mix_Chunk *jiangjun;
+extern Mix_Chunk *win; // 胜利音效
+// extern Mix_Music* chess_move_sound; //下棋音效
 
 // 屏幕尺寸[由于不确定究竟是怎么样的,这里存疑]
-#define SCREEN_WIDTH  1200
+#define SCREEN_WIDTH 1200
 #define SCREEN_HEIGHT 800
 
 // 棋盘在屏幕上的显示尺寸[没搞懂这个和上面的规则有什么关系] -hu 12.05
-#define BOARD_DISPLAY_WIDTH  750
+#define BOARD_DISPLAY_WIDTH 750
 #define BOARD_DISPLAY_HEIGHT 820
 
 // 棋子尺寸[图片文件是60*60]
@@ -57,24 +56,20 @@ extern Mix_Chunk* jiangjun;
 #define GRID_WIDTH 68
 #define GRID_HEIGHT 69
 
-// 游戏状态,判断是否结束了.
-typedef enum {
-    MENU_STATE,
-    GAME_STATE
-} GameState;
-
 // ====== 棋子编码定义（已在chess_database.h中定义） ======
-#define NONE         0  // 无棋子
+#define NONE 0 // 无棋子
 
-//音频函数声明
+// 音频函数声明
 void init_music();
 
+// 函数声明
+SDL_Texture *loadTexture(SDL_Renderer *renderer, const char *path);
+bool screenToBoard(int screen_x, int screen_y, int *board_x, int *board_y);
+void drawSelectedIndicator(SDL_Renderer *renderer);
+void drawCurrentPlayerIndicator(SDL_Renderer *renderer);
+void drawGameInfo(SDL_Renderer *renderer);
 
-//函数声明
-SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* path);
-bool screenToBoard(int screen_x, int screen_y, int* board_x, int* board_y);
-void drawSelectedIndicator(SDL_Renderer* renderer);
-void drawCurrentPlayerIndicator(SDL_Renderer* renderer);
-void drawGameInfo(SDL_Renderer* renderer);
+// 把棋盘恢复定义的标准状态 -hu 12.27
+void restoreBoardToStandardState();
 
 #endif // DISPLAYINTERFACE_H
