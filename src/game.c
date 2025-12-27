@@ -100,6 +100,9 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     // 新增"撤销悔棋"按钮
     SDL_Texture* redo_button = loadTexture(renderer, "res/images/redo_button.png");
 
+    // 新增：加载"继续游戏"按钮图片（用于菜单界面）
+    SDL_Texture* continue_button = loadTexture(renderer, "res/images/continue_button.png");
+
     //新加载胜利图片 -hu 12.26
     SDL_Texture* red_victory_image = loadTexture(renderer, "res/images/red_win.png");
     SDL_Texture* black_victory_image = loadTexture(renderer, "res/images/black_win.png");
@@ -108,6 +111,13 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     SDL_Rect startButtonRect = {
         (SCREEN_WIDTH - 200) / 2,
         (SCREEN_HEIGHT - 80) / 2 + 100,
+        200, 80
+    };
+
+    // "继续游戏"按钮的位置定义
+    SDL_Rect continueButtonRect = {
+        (SCREEN_WIDTH - 200) / 2,
+        (SCREEN_HEIGHT - 80) / 2 + 200,
         200, 80
     };
 
@@ -201,7 +211,26 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                     // 初始化棋局记录
                     init_game_record(&current_game, "GAME001", "红方玩家", "黑方玩家");
                     move_start_time = time(NULL);
-                    //printf("新游戏开始！红方先走。\n");
+                    // 重置游戏状态（确保新游戏从干净状态开始）
+                    is_shuai_live = true;
+                    is_jiang_live = true;
+                    redFlyToWin = false;
+                    blackFlyToWin = false;
+                    printf("新游戏开始！红方先走。\n");
+                }
+
+                // 新增：菜单状态下点击"继续游戏"按钮
+                if (currentState == MENU_STATE && pointInRect(mouseX, mouseY, continueButtonRect)) {
+                    if (has_save()) {
+                        if (load_game()) {
+                            currentState = GAME_STATE;
+                            printf("继续上次游戏\n");
+                            // 重新开始计时
+                            move_start_time = time(NULL);
+                        }
+                    } else {
+                        printf("没有找到存档文件\n");
+                    }
                 }
 
                 // 游戏状态下点击
@@ -232,10 +261,17 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                         // redoLastMove();
                     }
                     
-                    // 检查是否点击了棋盘上的棋子
+                    // 检查是否点击了棋盘上的棋子（游戏未结束时才允许走子）
                     int board_x, board_y;
-                    if (screenToBoard(mouseX, mouseY, &board_x, &board_y) && is_shuai_live == true && is_jiang_live == true) {
-                        handleBoardClick(board_x, board_y);
+                    if (screenToBoard(mouseX, mouseY, &board_x, &board_y)) {
+                        // 游戏未结束时才允许走子
+                        if (is_shuai_live && is_jiang_live && !redFlyToWin && !blackFlyToWin) {
+                            handleBoardClick(board_x, board_y);
+                        } else {
+                            // 游戏已结束，点击棋盘无效
+                            printf("游戏已结束，请重新开始\n");
+                        }
+                    }
 
                         //判断是否将军,但是有段错误 -hu 12.21
                         //选择在chess_move实现了 -hu 12.22
@@ -249,7 +285,7 @@ int main(int argc, char* argv[]) {//塞一个void试试?
 
             //              is_jiangToDeath(jiang_place);
             //                 is_shuaiToDeath(shuai_place);
-                    }
+                    
                 }
             }
         }//这就是走子判定的结尾部分了
@@ -278,6 +314,21 @@ int main(int argc, char* argv[]) {//塞一个void试试?
                 SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
                 SDL_RenderDrawRect(renderer, &startButtonRect);
             }
+
+            // 新增：渲染"继续游戏"按钮（如果有存档）
+            if (has_save()) {
+                if (continue_button) {
+                    SDL_RenderCopy(renderer, continue_button, NULL, &continueButtonRect);
+                } else {
+                    // 如果图标加载失败，绘制默认按钮
+                    SDL_SetRenderDrawColor(renderer, 100, 150, 200, 255);  // 蓝色
+                    SDL_RenderFillRect(renderer, &continueButtonRect);
+                    // 绘制边框
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                    SDL_RenderDrawRect(renderer, &continueButtonRect);
+                }
+            }
+
         } else {
             // 渲染游戏界面
             if (background) {
@@ -396,11 +447,13 @@ int main(int argc, char* argv[]) {//塞一个void试试?
         }
 
         //这里展示胜败的画面:当然是红方胜利显示红方获胜,反之则是黑方  //-hu 12.26
-        if(is_shuai_live ==true && is_jiang_live == false){
-            SDL_RenderCopy(renderer,red_victory_image, NULL, &redVictoryRect);//最后一个是距离边框的位置
+        if ((is_shuai_live == true && is_jiang_live == false) || redFlyToWin == true) {
+            // 红方胜利：要么黑将被吃，要么红方飞将胜利
+            SDL_RenderCopy(renderer, red_victory_image, NULL, &redVictoryRect);
         }
-        if(is_jiang_live ==true && is_shuai_live == false){
-            SDL_RenderCopy(renderer,black_victory_image, NULL, &redVictoryRect);
+        else if ((is_jiang_live == true && is_shuai_live == false) || blackFlyToWin == true) {
+            // 黑方胜利：要么红帅被吃，要么黑方飞将胜利
+            SDL_RenderCopy(renderer, black_victory_image, NULL, &redVictoryRect);
         }
         
         // 呈现画面
@@ -434,6 +487,9 @@ int main(int argc, char* argv[]) {//塞一个void试试?
     if(red_victory_image) SDL_DestroyTexture(red_victory_image);
     if(black_victory_image) SDL_DestroyTexture(black_victory_image);
 
+    // 清理继续游戏按钮纹理
+    if (continue_button) SDL_DestroyTexture(continue_button);
+
 
     
     SDL_DestroyRenderer(renderer);
@@ -444,4 +500,4 @@ int main(int argc, char* argv[]) {//塞一个void试试?
 
     //printf("游戏退出\n");
     return 0;
-   }
+}

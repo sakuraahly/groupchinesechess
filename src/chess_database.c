@@ -68,7 +68,7 @@ const char* get_piece_name_cn(int piece_code) {
 // 初始化棋步结构体
 void init_chess_move(ChessMove* move, int step, int piece_code, 
                      const char* notation, int from_x, int from_y, 
-                     int to_x, int to_y) {
+                     int to_x, int to_y, int captured_piece) { // 新增参数 captured_piece
     move->step_number = step;
     move->piece_code = piece_code;
     
@@ -87,6 +87,8 @@ void init_chess_move(ChessMove* move, int step, int piece_code,
     move->to_x = to_x;
     move->to_y = to_y;
     
+    move->captured_piece = captured_piece;  // 新增：保存被吃掉的棋子
+
     // 生成时间戳并初始化思考时间
     get_current_timestamp(move->timestamp, sizeof(move->timestamp));
     move->thinking_time = 0;
@@ -266,7 +268,7 @@ void save_game() {
         return;
     }
     
-    // 保存最重要的4部分数据：
+    // 保存最重要的6部分数据：
     
     // 1. 保存棋盘状态（10行×9列）
     fwrite(board, sizeof(int), 10 * 9, file);
@@ -284,9 +286,14 @@ void save_game() {
     fwrite(&selected_y, sizeof(int), 1, file);
     fwrite(&selected_piece, sizeof(int), 1, file);
     
+    // 5. 新增：保存游戏胜负状态
+    fwrite(&is_shuai_live, sizeof(bool), 1, file);
+    fwrite(&is_jiang_live, sizeof(bool), 1, file);
+    fwrite(&redFlyToWin, sizeof(bool), 1, file);
+    fwrite(&blackFlyToWin, sizeof(bool), 1, file);
+    
     fclose(file);
     
-    // 简单提示（控制台输出）
     printf("游戏已保存\n");
     printf("步数：%d，轮到：%s\n", 
            current_game.move_count, 
@@ -329,6 +336,12 @@ bool load_game() {
     fread(&selected_y, sizeof(int), 1, file);
     fread(&selected_piece, sizeof(int), 1, file);
     
+    // 5. 新增：读取游戏胜负状态
+    fread(&is_shuai_live, sizeof(bool), 1, file);
+    fread(&is_jiang_live, sizeof(bool), 1, file);
+    fread(&redFlyToWin, sizeof(bool), 1, file);
+    fread(&blackFlyToWin, sizeof(bool), 1, file);
+    
     fclose(file);
     
     // 显示加载信息
@@ -337,6 +350,9 @@ bool load_game() {
            current_game.player_red, current_game.player_black);
     printf("已走：%d 步\n", current_game.move_count);
     printf("轮到：%s\n", is_red_turn ? "红方" : "黑方");
+    printf("红帅存活：%s，黑将存活：%s\n", 
+           is_shuai_live ? "是" : "否", 
+           is_jiang_live ? "是" : "否");
     
     return true;
 }

@@ -405,10 +405,15 @@ bool movePiece(int from_x, int from_y, int to_x, int to_y) {
         //printf("非法移动！\n");
         return false;
     }
-    //判定这个目前移动的棋子是哪一方的. -hu 12.26
-    int color = getPieceColor(board[from_x][from_y]/10);
-    // 记录移动棋子的信息.
+
+    // 记录被吃掉的棋子
     int captured_piece = board[to_x][to_y];
+
+    //判定这个目前移动的棋子是哪一方的. -hu 12.26
+    int color = getPieceColor(piece);
+
+    // 直接使用上面定义的captured_piece变量记录移动的棋子
+    current_move.captured_piece = captured_piece;
 
     //这里有一个小bug,在displayinterface.h的外部变量只能让src/chess_move.c不报错,但是会导致编译失败 -hu 12.21
     //解决了 初始化函数作用域的坑 -hu 12.22
@@ -420,8 +425,9 @@ bool movePiece(int from_x, int from_y, int to_x, int to_y) {
     // 生成记谱法
     generateNotation(&current_move, from_x, from_y, to_x, to_y, piece);
     
-    // 初始化棋步记录
-    init_chess_move(&current_move, move_step, piece, current_move.notation, from_x, from_y, to_x, to_y);
+    // 初始化棋步记录 - 添加 captured_piece 参数
+    init_chess_move(&current_move, move_step, piece, current_move.notation, 
+                    from_x, from_y, to_x, to_y, captured_piece);
 
     // 计算思考时间
     if (move_start_time > 0) {
@@ -508,17 +514,40 @@ if(is_jiang_live == true && is_shuai_live == true){
 }
 
 // 悔棋功能
+// 悔棋功能
+// 悔棋功能
+// 在 revokeLastMove() 函数中添加：
 void revokeLastMove() {
     if (current_game.move_count == 0) {
-        //printf("没有棋步可以悔棋！\n");
         return;
     }
     
     ChessMove* last_move = &current_game.moves[current_game.move_count - 1];
     
-    // 恢复棋盘状态
+    // printf("悔棋：第%d步，移动棋子：%d，被吃棋子：%d\n", 
+           // last_move->step_number, last_move->piece_code, last_move->captured_piece);
+    
+    // 恢复移动的棋子到原位置
     board[last_move->from_x][last_move->from_y] = last_move->piece_code;
-    board[last_move->to_x][last_move->to_y] = NONE;
+    
+    // 恢复被吃掉的棋子（如果有的话）
+    board[last_move->to_x][last_move->to_y] = last_move->captured_piece;
+    
+    // 如果被吃掉的是将或帅，恢复其存活状态
+    if (last_move->captured_piece == 11) {  // RED_SHUAI = 11
+        is_shuai_live = true;
+        blackFlyToWin = false;  // 重置黑方飞将胜利标志
+        // printf("恢复红帅存活状态\n");
+    } else if (last_move->captured_piece == 21) {  // BLACK_JIANG = 21
+        is_jiang_live = true;
+        redFlyToWin = false;    // 重置红方飞将胜利标志
+        // printf("恢复黑将存活状态\n");
+    }
+    
+    // 重要：无论吃掉什么棋子，都要重置所有胜利标志
+    // 因为悔棋后游戏状态应该回到未结束状态
+    redFlyToWin = false;
+    blackFlyToWin = false;
     
     // 更新棋局记录
     current_game.move_count--;
@@ -526,8 +555,13 @@ void revokeLastMove() {
     // 更新游戏状态
     move_step--;
     is_red_turn = !is_red_turn;
+    move_start_time = time(NULL);
     
-    //printf("悔棋成功！恢复第%d步\n", last_move->step_number);
+    // 重新查找将帅位置（因为悔棋可能导致位置变化）
+    shuai_place = *find_shuai(&shuai_place);
+    jiang_place = *find_jiang(&jiang_place);
+    
+    // printf("悔棋成功！当前步数：%d\n", move_step);
 }
 
 // 处理棋盘点击
@@ -574,4 +608,14 @@ void handleBoardClick(int board_x, int board_y) {
             }
         }
     }
+}
+
+// 检查游戏是否结束
+bool isGameOver(void) {
+    // 游戏结束的条件：
+    // 1. 红帅被吃
+    // 2. 黑将被吃  
+    // 3. 红方飞将胜利
+    // 4. 黑方飞将胜利
+    return (!is_shuai_live || !is_jiang_live || redFlyToWin || blackFlyToWin);
 }
