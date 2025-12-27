@@ -66,6 +66,7 @@ typedef struct {
     int to_x, to_y;         // 目标坐标
     char timestamp[32];     // 时间戳
     int thinking_time;      // 思考时间（秒）
+    int captured_piece;     // 新增：被吃掉的棋子（0表示没有吃子）
 } ChessMove;
 
 // 棋局记录结构体：记录整盘棋的完整信息
@@ -94,7 +95,7 @@ const char* get_piece_name_cn(int piece_code);
 // 棋步操作函数
 void init_chess_move(ChessMove* move, int step, int piece_code, 
                      const char* notation, int from_x, int from_y, 
-                     int to_x, int to_y);
+                     int to_x, int to_y, int captured_piece); // 新增参数 captured_piece
 
 // 棋局操作函数
 void init_game_record(GameRecord* game, const char* id, 

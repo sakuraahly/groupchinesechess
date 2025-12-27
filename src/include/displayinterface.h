@@ -29,6 +29,21 @@ extern Mix_Music *bgm;
 extern Mix_Chunk *choseChess; // 捕获音效
 extern Mix_Chunk *eat;        // 吃子音效
 extern Mix_Chunk *jiangjun;
+// extern Mix_Music* chess_move_sound; //下棋音效
+
+// 游戏胜利标志
+extern bool redFlyToWin;   // 红方飞将胜利标志
+extern bool blackFlyToWin; // 黑方飞将胜利标志
+extern bool is_shuai_live; // 红帅是否存活
+extern bool is_jiang_live; // 黑将是否存活
+
+extern int board[10][9];
+
+extern bool is_music_playing; // 背景音乐的判定
+extern Mix_Music *bgm;
+extern Mix_Chunk *choseChess; // 捕获音效
+extern Mix_Chunk *eat;        // 吃子音效
+extern Mix_Chunk *jiangjun;
 extern Mix_Chunk *win; // 胜利音效
 // extern Mix_Music* chess_move_sound; //下棋音效
 
