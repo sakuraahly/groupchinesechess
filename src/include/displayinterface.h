@@ -31,6 +31,14 @@ extern Mix_Chunk* eat; //吃子音效
 extern Mix_Chunk* jiangjun;
 //extern Mix_Music* chess_move_sound; //下棋音效
 
+// 游戏胜利标志
+extern bool redFlyToWin;      // 红方飞将胜利标志
+extern bool blackFlyToWin;    // 黑方飞将胜利标志
+extern bool is_shuai_live;    // 红帅是否存活
+extern bool is_jiang_live;    // 黑将是否存活
+
+extern int board[10][9];
+
 
 
 // 屏幕尺寸[由于不确定究竟是怎么样的,这里存疑]

@@ -62,6 +62,8 @@ void is_jiangToDeath(place jiang);
 
 void is_shuaiToDeath(place shuai);
 
+// 检查游戏是否结束
+bool isGameOver(void);
 
 
 #endif  // CHESS_MOVE_H
