@@ -7,6 +7,12 @@
 
 #define NONE 0
 
+extern int board[10][9];   // 棋盘数组
+extern bool is_shuai_live; // 红帅存活
+extern bool is_jiang_live; // 黑将存活
+extern bool redFlyToWin;   // 红方飞将胜利
+extern bool blackFlyToWin; // 黑方飞将胜利
+
 GameRecord current_game;    // 当前棋局记录
 ChessMove current_move;     // 当前棋步记录
 bool is_red_turn = true;    // 当前轮到红方走棋

@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     // Mix_Music* bgm = Mix_LoadMUS("res/music/bgm.mp3");
     init_music();
 
-        // 游戏状态
+    // 游戏状态
     GameState currentState = MENU_STATE;
 
     // 主循环,大部分改变要在这里进行
@@ -150,14 +150,19 @@ int main(int argc, char *argv[])
                         if (load_game())
                         {
                             currentState = GAME_STATE;
-                            printf("继续上次游戏\n");
-                            // 重新开始计时
+
                             move_start_time = time(NULL);
+
+                            printf("游戏已加载，当前步数：%d\n", current_game.move_count);
+                        }
+                        else
+                        {
+                            printf("存档加载失败！\n");
                         }
                     }
                     else
                     {
-                        printf("没有找到存档文件\n");
+                        printf("没有找到存档文件！\n");
                     }
                 }
 
@@ -183,6 +188,7 @@ int main(int argc, char *argv[])
                     if (pointInRect(mouseX, mouseY, saveButtonRect))
                     {
                         printf("保存棋局\n");
+                        save_game(); // 保存二进制存档（用于继续游戏）
                         save_game_to_file(&current_game, "chess_game_record.txt");
                     }
 
@@ -230,6 +236,7 @@ int main(int argc, char *argv[])
                     if (pointInRect(mouseX, mouseY, saveButtonRect))
                     {
                         // printf("保存棋局\n");
+                        save_game(); // 保存二进制存档（用于继续游戏）
                         save_game_to_file(&current_game, "chess_game_record.txt");
                     }
 
@@ -281,7 +288,7 @@ int main(int argc, char *argv[])
             // 渲染继续游戏按钮 -hu 12.27
             if (continue_image)
             {
-                SDL_RenderCopy(renderer, continue_image, NULL, &continueButtonRect);
+                SDL_RenderCopy(renderer, continue_button, NULL, &continueButtonRect);
             }
 
             // 特色模式按钮 -hu 12.27
