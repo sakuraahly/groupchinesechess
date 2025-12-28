@@ -10,60 +10,62 @@
 #include <ctype.h>
 #include <time.h>
 
-//自己的的头文件
+// 自己的的头文件
 #include "chess_database.h"
 #include "displayinterface.h"
+#include "chess_move.h"
 
-// 移动记录结构体
-typedef struct MoveRecord {
-    int from_x, from_y;     // 移动前的位置
-    int to_x, to_y;         // 移动后的位置
-    int chipiece;     // 被吃掉的棋子（如果有）
-    int napiece;        // 移动的棋子
-    struct MoveRecord* prev; // 上一步
-    struct MoveRecord* next; // 下一步（用于重做功能，可选）
-} MoveRecord;
+typedef struct chessPlace
+{
+    int x;
+    int y;
+} place;
+// 在这里引入所有的音频比较好的
+// 当我没说,现在音频在displayinterface -hu 12.22
+extern Mix_Chunk *jiangjun;
+extern bool is_jiang_live;
+extern bool is_shuai_live;
 
-// 移动历史管理
-typedef struct {
-    MoveRecord* current;    // 当前移动记录
-    MoveRecord* tail;       // 历史记录尾部（最新记录）
-    int move_count;         // 总移动步数
-} MoveHistory;
+extern place jiang_place;
+extern place shuai_place;
 
+// 真有趣,居然在判断将军的时候才用到了这个坐标结构体 hu 12.22
 
-//函数声明
-bool pointInRect(int x, int y, SDL_Rect rect);//检测点是否在矩形内
+// 存储了将和帅的位置
+extern place jiang;
+extern place shuai;
 
-int getPieceColor(int piece);//获取棋子颜色
+// 函数声明
+bool pointInRect(int x, int y, SDL_Rect rect); // 检测点是否在矩形内
 
-int getPieceType(int piece);//获取棋子类型
+int getPieceColor(int piece); // 获取棋子颜色
 
-bool screenToBoard(int screen_x, int screen_y, int* board_x, int* board_y) ;//屏幕坐标转换为棋盘坐标
+int getPieceType(int piece); // 获取棋子类型
 
-bool isSameColor(int piece1, int piece2);//判断两枚棋子是否同色
+bool screenToBoard(int screen_x, int screen_y, int *board_x, int *board_y); // 屏幕坐标转换为棋盘坐标
 
-int countPiecesInLine(int x1, int y1, int x2, int y2) ;//计算两点之间有多少棋子
+bool isSameColor(int piece1, int piece2); // 判断两枚棋子是否同色
 
-bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y);//判断是否为合法的移动
+int countPiecesInLine(int x1, int y1, int x2, int y2); // 计算两点之间有多少棋子
 
-MoveHistory* create_move_history();
+bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y); // 判断是否为合法的移动
 
-bool make_move_with_record(MoveHistory* history, int from_x, int from_y, int to_x, int to_y);//移动棋子
+bool movePiece(int from_x, int from_y, int to_x, int to_y); // 移动棋子
 
-bool undo_move(MoveHistory* history); // 悔棋
+void revokeLastMove(); // 撤销上一步的移动
 
-void clear_move_history(MoveHistory* history);//移动棋子后清空后续历史
+void handleBoardClick(int board_x, int board_y); // 处理棋盘点击事件
 
-bool redo_move(MoveHistory* history);//撤销悔棋
+// 这些是用来判定是否将军的功能 -hu 12.22
+place *find_jiang(place *jiang);
 
-void handleBoardClick(int board_x, int board_y) ;//处理棋盘点击事件
+place *find_shuai(place *shuai);
 
-void record_move(MoveHistory* history, int from_x, int from_y, int to_x, int to_y, int captured_piece, int moved_piece);
+void is_jiangToDeath(place jiang);
 
+void is_shuaiToDeath(place shuai);
 
+// 检查游戏是否结束
+bool isGameOver(void);
 
-
-
-
-#endif  // CHESS_MOVE_H
+#endif // CHESS_MOVE_H

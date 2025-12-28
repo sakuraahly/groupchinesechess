@@ -4,24 +4,24 @@
 #include <time.h>
 #include <stdbool.h>
 
-// ±£³ÖÔ­ÓĞµÄ½á¹¹Ìå¶¨Òå²»±ä£¬È·±£Ïòºó¼æÈİ
+// ä¿æŒåŸæœ‰çš„ç»“æ„ä½“å®šä¹‰ä¸å˜ï¼Œç¡®ä¿å‘åå…¼å®¹
 typedef struct {
-    time_t start_time;      // ¼ÆÊ±¿ªÊ¼Ê±¼ä
-    time_t elapsed_time;    // ÒÑÓÃÊ±¼ä£¨Ãë£©
-    time_t time_limit;      // Ê±¼äÏŞÖÆ£¨Ãë£©£¬0±íÊ¾ÎŞÏŞÖÆ
-    bool is_running;        // ÊÇ·ñÕıÔÚÔËĞĞ
-    bool is_paused;         // ÊÇ·ñÔİÍ£
-    time_t pause_start;     // ÔİÍ£¿ªÊ¼Ê±¼ä
-    time_t total_pause_time; // ×ÜÔİÍ£Ê±¼ä
+    time_t start_time;      // è®¡æ—¶å¼€å§‹æ—¶é—´
+    time_t elapsed_time;    // å·²ç”¨æ—¶é—´ï¼ˆç§’ï¼‰
+    time_t time_limit;      // æ—¶é—´é™åˆ¶ï¼ˆç§’ï¼‰ï¼Œ0è¡¨ç¤ºæ— é™åˆ¶
+    bool is_running;        // æ˜¯å¦æ­£åœ¨è¿è¡Œ
+    bool is_paused;         // æ˜¯å¦æš‚åœ
+    time_t pause_start;     // æš‚åœå¼€å§‹æ—¶é—´
+    time_t total_pause_time; // æ€»æš‚åœæ—¶é—´
 } Timer;
 
-// ±£³ÖÔ­ÓĞµÄº¯ÊıÉùÃ÷²»±ä£¨Ïòºó¼æÈİ£©
+// ä¿æŒåŸæœ‰çš„å‡½æ•°å£°æ˜ä¸å˜ï¼ˆå‘åå…¼å®¹ï¼‰
 void timer_init(Timer *timer, int time_limit);
 int timer_get_elapsed_seconds(Timer *timer);
 int timer_is_time_up(Timer *timer);
 void timer_display(Timer *timer, const char *player_name);
 
-// ĞÂÔö¹¦ÄÜº¯Êı£¨µ«gameºÍdisplayinterface²»ĞèÒªµ÷ÓÃÕâĞ©£©
+// æ–°å¢åŠŸèƒ½å‡½æ•°ï¼ˆä½†gameå’Œdisplayinterfaceä¸éœ€è¦è°ƒç”¨è¿™äº›ï¼‰
 void timer_start(Timer *timer);
 void timer_pause(Timer *timer);
 void timer_resume(Timer *timer);
