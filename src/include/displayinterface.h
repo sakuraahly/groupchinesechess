@@ -19,11 +19,45 @@
 
 // 包含自己的头文件
 #include "chess_database.h"
+// 这些是渲染器,图片资源等 -hu 12.28
+extern SDL_Window *window;
+extern SDL_Renderer *renderer;
+extern SDL_Texture *background;
+extern SDL_Texture *chess_board;
+extern SDL_Texture *start_button;
+extern SDL_Texture *special_mode;
+// ====== 新增：加载侧边按钮图标 ====== 这些是游戏界面的侧边按钮
+extern SDL_Texture *return_button;
+extern SDL_Texture *revoke_button;
+extern SDL_Texture *save_button;
+// 新增"撤销悔棋"按钮
+extern SDL_Texture *redo_button;
+// 新增：加载"继续游戏"按钮图片（用于菜单界面）
+extern SDL_Texture *continue_button;
+// 新加载胜利图片 -hu 12.26
+extern SDL_Texture *red_victory_image;
+extern SDL_Texture *black_victory_image;
+// 新增继续游戏图片 -hu 12.26
+extern SDL_Texture *continue_image;
+// 加载投降按钮 -hu 12.28
+extern SDL_Texture *surrender_button;
+
+// 图片位置结构体定义
+extern SDL_Rect startButtonRect;
+extern SDL_Rect continueButtonRect;
+extern SDL_Rect returnButtonRect;
+extern SDL_Rect revokeButtonRect;
+extern SDL_Rect saveButtonRect;
+extern SDL_Rect redoButtonRect;
+extern SDL_Rect redVictoryRect;
+extern SDL_Rect blackVictoryImageRect;
+extern SDL_Rect surrenderButtonRect;
+extern SDL_Rect specialModeRect;
+extern SDL_Texture *pieces[28];
 
 // 外部变量的定义
 extern const char *piece_names[28]; // 棋子图片路径数组
 extern int board[10][9];            // 棋盘数组
-
 // 游戏胜利标志
 extern bool redFlyToWin;   // 红方飞将胜利标志
 extern bool blackFlyToWin; // 黑方飞将胜利标志
@@ -67,6 +101,9 @@ extern Mix_Chunk *surrender; // 失败音效
 
 // ====== 棋子编码定义（已在chess_database.h中定义） ======
 #define NONE 0 // 无棋子
+
+// 资源加载代码 -hu 12.28
+void init_resources();
 
 // 音频函数声明
 void init_music();
