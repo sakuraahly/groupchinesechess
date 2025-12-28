@@ -118,4 +118,7 @@ void drawGameInfo(SDL_Renderer *renderer);
 // 把棋盘恢复定义的标准状态 -hu 12.27
 void restoreBoardToStandardState();
 
+// 清理资源函数 // -hu 12.28
+void cleanup_resources();
+
 #endif // DISPLAYINTERFACE_H

@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
                 }
 
                 // 游戏状态下点击
-                if (currentState == GAME_STATE)
+                if (currentState != MENU_STATE)
                 {
                     // 检查"回到菜单"按钮
                     if (pointInRect(mouseX, mouseY, returnButtonRect))
@@ -204,55 +204,19 @@ int main(int argc, char *argv[])
                     {
                         *play_surrendersound_ptr = true;
                         *is_surrender_ptr = true;
-                    }
 
-                    // 检查是否点击了棋盘上的棋子
-                    int board_x, board_y;
-                    if (screenToBoard(mouseX, mouseY, &board_x, &board_y) && is_shuai_live == true && is_jiang_live == true)
-                    {
-                        handleBoardClick(board_x, board_y);
-                    }
-                }
-
-                // 特色模式下点击
-                if (currentState == SPECIAL_MODE_STATE)
-                {
-                    // 检查"回到菜单"按钮
-                    if (pointInRect(mouseX, mouseY, returnButtonRect))
-                    {
-                        // printf("回到菜单\n");
-                        currentState = MENU_STATE;
-                        is_piece_selected = false;
-                    }
-
-                    // 检查"悔棋"按钮
-                    if (pointInRect(mouseX, mouseY, revokeButtonRect))
-                    {
-                        // printf("悔棋\n");
-                        revokeLastMove();
-                    }
-
-                    // 检查"保存棋局"按钮
-                    if (pointInRect(mouseX, mouseY, saveButtonRect))
-                    {
-                        // printf("保存棋局\n");
-                        save_game(); // 保存二进制存档（用于继续游戏）
-                        save_game_to_file(&current_game, "chess_game_record.txt");
-                    }
-
-                    // ====== 新增：检查"撤销悔棋"按钮 ======
-                    if (pointInRect(mouseX, mouseY, redoButtonRect))
-                    {
-                        // printf("撤销悔棋\n");
-                        //  TODO: 这里将来实现撤销悔棋功能
-                        //  redoLastMove();
-                    }
-
-                    // 检查投降按钮 -hu 12.28
-                    if (pointInRect(mouseX, mouseY, surrenderButtonRect))
-                    {
-                        *play_surrendersound_ptr = true;
-                        *is_surrender_ptr = true;
+                        if (is_red_turn)
+                        {
+                            shuai_place = *find_shuai(&shuai_place);
+                            board[shuai_place.x][shuai_place.y] = NONE;
+                            is_shuai_live = false;
+                        }
+                        else
+                        {
+                            jiang_place = *find_jiang(&shuai_place);
+                            board[jiang_place.x][jiang_place.y] = NONE;
+                            is_jiang_live = false;
+                        }
                     }
 
                     // 检查是否点击了棋盘上的棋子
@@ -286,7 +250,7 @@ int main(int argc, char *argv[])
             }
 
             // 渲染继续游戏按钮 -hu 12.27
-            if (continue_image)
+            if (continue_button)
             {
                 SDL_RenderCopy(renderer, continue_button, NULL, &continueButtonRect);
             }
@@ -449,7 +413,7 @@ int main(int argc, char *argv[])
                 SDL_RenderCopy(renderer, red_victory_image, NULL, &redVictoryRect); // 最后一个是距离边框的位置
             }
             // 下面这个只是为了保障音效只播放一次,不能插在上面 // -hu 12.27
-            if (is_shuai_live == true && is_jiang_live == false && play_winsound == true && currentState)
+            if (is_shuai_live == true && is_jiang_live == false && play_winsound == true && currentState && is_surrender_ptr == false)
             {
                 Mix_PlayChannel(-1, win, 0);
                 // *play_winsound_ptr = false;
@@ -459,7 +423,7 @@ int main(int argc, char *argv[])
             {
                 SDL_RenderCopy(renderer, black_victory_image, NULL, &redVictoryRect);
             }
-            if (is_jiang_live == true && is_shuai_live == false && play_winsound == true && currentState)
+            if (is_jiang_live == true && is_shuai_live == false && play_winsound == true && currentState && is_surrender_ptr == false)
             {
                 Mix_PlayChannel(-1, win, 0);
                 // *play_winsound_ptr = false;
@@ -471,52 +435,6 @@ int main(int argc, char *argv[])
         SDL_Delay(16);
     }
 
-    // 清理资源
-    // printf("清理资源...\n");
-    if (bgm)
-    {
-        Mix_HaltMusic();
-        Mix_FreeMusic(bgm);
-    }
-
-    // 这里的统一用SDL_DestroyTexture函数销毁纹理(实际上按照我们的理解翻译成图片资源更好. -hu 12.26)
-
-    for (int i = 0; i < 28; i++)
-    {
-        if (pieces[i])
-            SDL_DestroyTexture(pieces[i]);
-    }
-    if (background)
-        SDL_DestroyTexture(background);
-    if (chess_board)
-        SDL_DestroyTexture(chess_board);
-    if (start_button)
-        SDL_DestroyTexture(start_button);
-
-    // 清理侧边按钮纹理
-    if (return_button)
-        SDL_DestroyTexture(return_button);
-    if (revoke_button)
-        SDL_DestroyTexture(revoke_button);
-    if (save_button)
-        SDL_DestroyTexture(save_button);
-    if (redo_button)
-        SDL_DestroyTexture(redo_button);
-    if (red_victory_image)
-        SDL_DestroyTexture(red_victory_image);
-    if (black_victory_image)
-        SDL_DestroyTexture(black_victory_image);
-
-    // 清理继续游戏按钮纹理
-    if (continue_button)
-        SDL_DestroyTexture(continue_button);
-
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    Mix_CloseAudio();
-    IMG_Quit();
-    SDL_Quit();
-
-    // printf("游戏退出\n");
+    void cleanup_resources();
     return 0;
 } // 游戏主函数结尾的花括号

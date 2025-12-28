@@ -10,53 +10,56 @@
 #include <ctype.h>
 #include <time.h>
 
-//自己的的头文件
+// 自己的的头文件
 #include "chess_database.h"
 #include "displayinterface.h"
 #include "chess_move.h"
 
-//在这里引入所有的音频比较好的
-//当我没说,现在音频在displayinterface -hu 12.22 
-extern  Mix_Chunk* jiangjun;
-extern  bool is_jiang_live;
-extern bool is_shuai_live;
-
-
-//真有趣,居然在判断将军的时候才用到了这个坐标结构体 hu 12.22
-typedef struct chessPlace{
+typedef struct chessPlace
+{
     int x;
     int y;
-}place;
- //存储了将和帅的位置
-        extern place jiang;
-        extern place shuai;
+} place;
+// 在这里引入所有的音频比较好的
+// 当我没说,现在音频在displayinterface -hu 12.22
+extern Mix_Chunk *jiangjun;
+extern bool is_jiang_live;
+extern bool is_shuai_live;
 
-//函数声明
-bool pointInRect(int x, int y, SDL_Rect rect);//检测点是否在矩形内
+extern place jiang_place;
+extern place shuai_place;
 
-int getPieceColor(int piece);//获取棋子颜色
+// 真有趣,居然在判断将军的时候才用到了这个坐标结构体 hu 12.22
 
-int getPieceType(int piece);//获取棋子类型
+// 存储了将和帅的位置
+extern place jiang;
+extern place shuai;
 
-bool screenToBoard(int screen_x, int screen_y, int* board_x, int* board_y) ;//屏幕坐标转换为棋盘坐标
+// 函数声明
+bool pointInRect(int x, int y, SDL_Rect rect); // 检测点是否在矩形内
 
-bool isSameColor(int piece1, int piece2);//判断两枚棋子是否同色
+int getPieceColor(int piece); // 获取棋子颜色
 
-int countPiecesInLine(int x1, int y1, int x2, int y2) ;//计算两点之间有多少棋子
+int getPieceType(int piece); // 获取棋子类型
 
-bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y);//判断是否为合法的移动
+bool screenToBoard(int screen_x, int screen_y, int *board_x, int *board_y); // 屏幕坐标转换为棋盘坐标
 
-bool movePiece(int from_x, int from_y, int to_x, int to_y) ;//移动棋子
+bool isSameColor(int piece1, int piece2); // 判断两枚棋子是否同色
 
-void revokeLastMove() ; // 撤销上一步的移动
+int countPiecesInLine(int x1, int y1, int x2, int y2); // 计算两点之间有多少棋子
 
-void handleBoardClick(int board_x, int board_y) ;//处理棋盘点击事件
+bool isValidMove(int piece_code, int from_x, int from_y, int to_x, int to_y); // 判断是否为合法的移动
 
+bool movePiece(int from_x, int from_y, int to_x, int to_y); // 移动棋子
 
-//这些是用来判定是否将军的功能 -hu 12.22
-place* find_jiang(place* jiang);
+void revokeLastMove(); // 撤销上一步的移动
 
-place* find_shuai(place* shuai);
+void handleBoardClick(int board_x, int board_y); // 处理棋盘点击事件
+
+// 这些是用来判定是否将军的功能 -hu 12.22
+place *find_jiang(place *jiang);
+
+place *find_shuai(place *shuai);
 
 void is_jiangToDeath(place jiang);
 
@@ -65,5 +68,4 @@ void is_shuaiToDeath(place shuai);
 // 检查游戏是否结束
 bool isGameOver(void);
 
-
-#endif  // CHESS_MOVE_H
+#endif // CHESS_MOVE_H

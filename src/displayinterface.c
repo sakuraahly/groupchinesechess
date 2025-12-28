@@ -320,3 +320,54 @@ void drawSelectedIndicator(SDL_Renderer *renderer)
         // Mix_PlayMusic(choseChess, 0);
     }
 }
+
+void cleanup_resources()
+{
+    // 清理资源
+    // printf("清理资源...\n");
+    if (bgm)
+    {
+        Mix_HaltMusic();
+        Mix_FreeMusic(bgm);
+    }
+
+    // 这里的统一用SDL_DestroyTexture函数销毁纹理(实际上按照我们的理解翻译成图片资源更好. -hu 12.26)
+
+    for (int i = 0; i < 28; i++)
+    {
+        if (pieces[i])
+            SDL_DestroyTexture(pieces[i]);
+    }
+    if (background)
+        SDL_DestroyTexture(background);
+    if (chess_board)
+        SDL_DestroyTexture(chess_board);
+    if (start_button)
+        SDL_DestroyTexture(start_button);
+
+    // 清理侧边按钮纹理
+    if (return_button)
+        SDL_DestroyTexture(return_button);
+    if (revoke_button)
+        SDL_DestroyTexture(revoke_button);
+    if (save_button)
+        SDL_DestroyTexture(save_button);
+    if (redo_button)
+        SDL_DestroyTexture(redo_button);
+    if (red_victory_image)
+        SDL_DestroyTexture(red_victory_image);
+    if (black_victory_image)
+        SDL_DestroyTexture(black_victory_image);
+
+    // 清理继续游戏按钮纹理
+    if (continue_button)
+        SDL_DestroyTexture(continue_button);
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    Mix_CloseAudio();
+    IMG_Quit();
+    SDL_Quit();
+
+    // printf("游戏退出\n");
+}

@@ -17,8 +17,8 @@
 place jiang;
 place shuai;
 // 其实下面这两个才是真正的,但是上面这两个没有造成干扰就先不动了 -hu 12.22
-static place jiang_place = {0, 4};
-static place shuai_place = {9, 4};
+place jiang_place = {0, 4};
+place shuai_place = {9, 4};
 
 // 判定将和帅是否或者
 bool is_shuai_live = true;
