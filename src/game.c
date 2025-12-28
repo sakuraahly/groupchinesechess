@@ -128,23 +128,34 @@ int main(int argc, char *argv[])
     SDL_Texture *red_victory_image = loadTexture(renderer, "res/images/red_win.png");
     SDL_Texture *black_victory_image = loadTexture(renderer, "res/images/black_win.png");
 
-    // 新增继续游戏图片 -hu 12.26
-    SDL_Texture *continue_image = loadTexture(renderer, "res/images/continue_image.png");
-
     // 加载投降按钮 -hu 12.28
     SDL_Texture *surrender_button = loadTexture(renderer, "res/images/surrender_image.png");
 
-    // 创建开始按钮
-    SDL_Rect startButtonRect = {
-        (SCREEN_WIDTH - 200) / 2,
-        (SCREEN_HEIGHT - 80) / 2 + 100,
-        200, 80};
+    // ============ 按钮位置定义 ============
 
-    // "继续游戏"按钮的位置定义
+    // 1. "开始游戏"按钮 - 居中偏上
+    SDL_Rect startButtonRect = {
+        (SCREEN_WIDTH - 200) / 2,    // X居中： (1200-200)/2 = 500
+        (SCREEN_HEIGHT - 80) / 2 - 50,  // Y居中偏上： (800-80)/2 - 50 = 360-50 = 310
+        200,  // 宽度
+        80    // 高度
+    };
+
+    // 2. "继续游戏"按钮 - 居中偏下（在开始按钮下方）
     SDL_Rect continueButtonRect = {
-        (SCREEN_WIDTH - 200) / 2,
-        (SCREEN_HEIGHT - 80) / 2 + 200,
-        200, 80};
+        (SCREEN_WIDTH - 200) / 2,    // X居中：500
+        (SCREEN_HEIGHT - 80) / 2 + 50,   // Y居中偏下：360+50 = 410
+        200,  // 宽度
+        80    // 高度
+    };
+
+    // 3. "特色模式"按钮 - 左下角
+    SDL_Rect specialModeRect = {
+        30,      // 距离左侧30像素
+        SCREEN_HEIGHT - 200 - 30,  // 距离底部30像素：800-200-30 = 570
+        200,     // 宽度
+        200      // 高度
+    };
 
     // 创建侧边按钮位置
     SDL_Rect returnButtonRect = {
@@ -187,13 +198,6 @@ int main(int argc, char *argv[])
 
     // 增加 胜利与失败的图片的位置. -hu 12.26
     SDL_Rect redVictoryRect = {
-        30,  // 距离左侧30像素
-        560, // 距离顶部560像素
-        200, // 宽度
-        200  // 高度
-    };
-
-    SDL_Rect specialModeRect = {
         30,  // 距离左侧30像素
         560, // 距离顶部560像素
         200, // 宽度
@@ -304,14 +308,19 @@ int main(int argc, char *argv[])
                         if (load_game())
                         {
                             currentState = GAME_STATE;
-                            printf("继续上次游戏\n");
-                            // 重新开始计时
+                            
                             move_start_time = time(NULL);
+                            
+                            printf("游戏已加载，当前步数：%d\n", current_game.move_count);
+                        }
+                        else
+                        {
+                            printf("存档加载失败！\n");
                         }
                     }
                     else
                     {
-                        printf("没有找到存档文件\n");
+                        printf("没有找到存档文件！\n");
                     }
                 }
 
@@ -337,6 +346,7 @@ int main(int argc, char *argv[])
                     if (pointInRect(mouseX, mouseY, saveButtonRect))
                     {
                         printf("保存棋局\n");
+                        save_game(); // 保存二进制存档（用于继续游戏）
                         save_game_to_file(&current_game, "chess_game_record.txt");
                     }
 
@@ -384,6 +394,7 @@ int main(int argc, char *argv[])
                     if (pointInRect(mouseX, mouseY, saveButtonRect))
                     {
                         // printf("保存棋局\n");
+                        save_game(); // 保存二进制存档（用于继续游戏）
                         save_game_to_file(&current_game, "chess_game_record.txt");
                     }
 
@@ -430,7 +441,7 @@ int main(int argc, char *argv[])
                 SDL_SetRenderDrawColor(renderer, 50, 50, 100, 255);
                 SDL_RenderClear(renderer);
             }
-            // 开始按钮,位于大概正中间
+            // 1. 渲染开始按钮
             if (start_button)
             {
                 SDL_RenderCopy(renderer, start_button, NULL, &startButtonRect);
@@ -442,20 +453,22 @@ int main(int argc, char *argv[])
                 SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
                 SDL_RenderDrawRect(renderer, &startButtonRect);
             }
-            // 渲染继续游戏按钮 -hu 12.27
-            if (continue_image)
+            
+            // 2. 渲染继续游戏按钮
+            if (continue_button)  // 注意：使用 continue_button 纹理
             {
-                SDL_RenderCopy(renderer, continue_image, NULL, &continueButtonRect);
+                SDL_RenderCopy(renderer, continue_button, NULL, &continueButtonRect);
             }
             else
             {
+                // 重要：这里使用 continueButtonRect，不是 specialModeRect！
                 SDL_SetRenderDrawColor(renderer, 0, 150, 200, 255);
-                SDL_RenderFillRect(renderer, &specialModeRect);
+                SDL_RenderFillRect(renderer, &continueButtonRect);  // ← 修正这里！
                 SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
-                SDL_RenderDrawRect(renderer, &specialModeRect);
+                SDL_RenderDrawRect(renderer, &continueButtonRect);  // ← 修正这里！
             }
-
-            // 特色模式按钮 -hu 12.27
+            
+            // 3. 渲染特色模式按钮
             if (special_mode)
             {
                 SDL_RenderCopy(renderer, special_mode, NULL, &specialModeRect);
