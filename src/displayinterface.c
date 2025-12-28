@@ -60,6 +60,11 @@ void init_music()
     jiangjun = Mix_LoadWAV("res/music/jiang.wav");
     win = Mix_LoadWAV("res/music/win.wav");
     surrender = Mix_LoadWAV("res/music/surrender.wav");
+    if (bgm)
+    {
+        Mix_PlayMusic(bgm, -1);
+        is_music_playing = true;
+    }
 }
 
 // 棋盘布局  我想这总不会再搞错了-hu //现在修改为变量棋盘

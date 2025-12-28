@@ -46,13 +46,7 @@ int main(int argc, char *argv[])
     // Mix_Music* bgm = Mix_LoadMUS("res/music/bgm.mp3");
     init_music();
 
-    if (bgm)
-    {
-        Mix_PlayMusic(bgm, -1);
-        is_music_playing = true;
-    }
-
-    // 游戏状态
+        // 游戏状态
     GameState currentState = MENU_STATE;
 
     // 主循环,大部分改变要在这里进行
