@@ -101,7 +101,7 @@ void is_shuaiToDeath(place shuai)
         }
     }
 }
-
+// 12.26飞将!!! -hu
 int isFlyToDeath(place shuai, place jiang)
 {
     if (shuai.y == jiang.y)
@@ -725,13 +725,13 @@ void handleBoardClick(int board_x, int board_y)
     }
 }
 
-// 检查游戏是否结束
-bool isGameOver(void)
-{
-    // 游戏结束的条件：
-    // 1. 红帅被吃
-    // 2. 黑将被吃
-    // 3. 红方飞将胜利
-    // 4. 黑方飞将胜利
-    return (!is_shuai_live || !is_jiang_live || redFlyToWin || blackFlyToWin);
-}
+// // 检查游戏是否结束
+// bool isGameOver(void)
+// {
+//     // 游戏结束的条件：
+//     // 1. 红帅被吃
+//     // 2. 黑将被吃
+//     // 3. 红方飞将胜利
+//     // 4. 黑方飞将胜利
+//     return (!is_shuai_live || !is_jiang_live || redFlyToWin || blackFlyToWin);
+// }

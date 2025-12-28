@@ -24,13 +24,6 @@
 extern const char *piece_names[28]; // 棋子图片路径数组
 extern int board[10][9];            // 棋盘数组
 
-extern bool is_music_playing; // 背景音乐的判定
-extern Mix_Music *bgm;
-extern Mix_Chunk *choseChess; // 捕获音效
-extern Mix_Chunk *eat;        // 吃子音效
-extern Mix_Chunk *jiangjun;
-// extern Mix_Music* chess_move_sound; //下棋音效
-
 // 游戏胜利标志
 extern bool redFlyToWin;   // 红方飞将胜利标志
 extern bool blackFlyToWin; // 黑方飞将胜利标志
@@ -44,7 +37,8 @@ extern Mix_Music *bgm;
 extern Mix_Chunk *choseChess; // 捕获音效
 extern Mix_Chunk *eat;        // 吃子音效
 extern Mix_Chunk *jiangjun;
-extern Mix_Chunk *win; // 胜利音效
+extern Mix_Chunk *win;       // 胜利音效
+extern Mix_Chunk *surrender; // 失败音效
 // extern Mix_Music* chess_move_sound; //下棋音效
 
 // 屏幕尺寸[由于不确定究竟是怎么样的,这里存疑]

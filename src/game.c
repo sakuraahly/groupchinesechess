@@ -29,6 +29,11 @@ typedef enum
 extern bool is_music_playing;
 bool play_winsound = true;
 bool *play_winsound_ptr = &play_winsound;
+
+bool play_surrendersound = false;
+bool *play_surrendersound_ptr = &play_surrendersound;
+bool is_surrender = false;
+bool *is_surrender_ptr = &is_surrender;
 // 致命提醒!!!!!不要删除错误捕获代码,没人知道为什么会错误.
 int main(int argc, char *argv[])
 { // 塞一个void试试?
@@ -90,11 +95,6 @@ int main(int argc, char *argv[])
         Mix_PlayMusic(bgm, -1);
         is_music_playing = true;
     }
-
-    // 加载别的音频以及对应的状态
-    //  Mix_Music* choseChess = Mix_LoadMUS("res/music/chose.mp3");
-    //  static bool shouldPlayChoseChess = false;//这个的音频控制在chess_move.c中,is_piece_selected这个函数里面
-
     // 加载资源(这些是菜单和背景)
     SDL_Texture *background = loadTexture(renderer, "res/images/background.png");
     SDL_Texture *chess_board = loadTexture(renderer, "res/images/chess_board.png");
@@ -130,6 +130,10 @@ int main(int argc, char *argv[])
 
     // 新增继续游戏图片 -hu 12.26
     SDL_Texture *continue_image = loadTexture(renderer, "res/images/continue_image.png");
+
+    // 加载投降按钮 -hu 12.28
+    SDL_Texture *surrender_button = loadTexture(renderer, "res/images/surrender_image.png");
+
     // 创建开始按钮
     SDL_Rect startButtonRect = {
         (SCREEN_WIDTH - 200) / 2,
@@ -173,6 +177,14 @@ int main(int argc, char *argv[])
         50   // 高度
     };
 
+    // 这是投降的按钮 -- hu 12.28
+    SDL_Rect surrenderButtonRect = {
+        30,  // 和撤销悔棋按钮在同一列
+        530, // 在撤销悔棋按钮下方（480+50+30间距）
+        100, // 宽度
+        50   // 高度
+    };
+
     // 增加 胜利与失败的图片的位置. -hu 12.26
     SDL_Rect redVictoryRect = {
         30,  // 距离左侧30像素
@@ -190,20 +202,6 @@ int main(int argc, char *argv[])
 
     // 游戏状态
     GameState currentState = MENU_STATE;
-
-    // // 显示坐标系信息
-    // printf("=== 坐标系设置 ===\n");
-    // printf("棋盘显示位置: (%d, %d)\n", BOARD_VISUAL_X, BOARD_VISUAL_Y);
-    // printf("棋盘格点原点: (%d, %d)\n", GRID_ORIGIN_X, GRID_ORIGIN_Y);
-    // printf("网格间距: %dx%d\n", GRID_WIDTH, GRID_HEIGHT);
-    // printf("棋子尺寸: %d\n", PIECE_SIZE);
-    // printf("\n关键棋子理论位置:\n");
-    // printf("黑车(0,0): 格点(%d,%d)\n",
-    //        GRID_ORIGIN_X + 0 * GRID_WIDTH, GRID_ORIGIN_Y + 0 * GRID_HEIGHT);
-    // printf("黑将(0,4): 格点(%d,%d)\n",
-    //        GRID_ORIGIN_X + 4 * GRID_WIDTH, GRID_ORIGIN_Y + 0 * GRID_HEIGHT);
-    // printf("红帅(9,4): 格点(%d,%d)\n",
-    //        GRID_ORIGIN_X + 4 * GRID_WIDTH, GRID_ORIGIN_Y + 9 * GRID_HEIGHT);
 
     // 主循环,大部分改变要在这里进行
     // 上面的是事件处理循环,下面的是渲染循环 -hu 11.24
@@ -253,7 +251,9 @@ int main(int argc, char *argv[])
                     redFlyToWin = false;
                     blackFlyToWin = false;
                     is_red_turn = true;
-                                }
+                    *is_surrender_ptr = false;
+                    *play_surrendersound_ptr = false;
+                }
 
                 // 菜单状态下点击特色模式按钮 -hu 12.27
                 if (currentState == MENU_STATE && pointInRect(mouseX, mouseY, specialModeRect))
@@ -266,6 +266,8 @@ int main(int argc, char *argv[])
                     redFlyToWin = false;
                     blackFlyToWin = false;
                     is_red_turn = true;
+                    *is_surrender_ptr = false;
+                    *play_surrendersound_ptr = false;
                     // 特色模式是除了将和帅在得那两行,其余的都是兵和卒
                     for (int x = 1; x < 5; x++)
                     {
@@ -345,6 +347,12 @@ int main(int argc, char *argv[])
                         // TODO: 这里将来实现撤销悔棋功能
                         // redoLastMove();
                     }
+                    // 检查投降按钮 -hu 12.28
+                    if (pointInRect(mouseX, mouseY, surrenderButtonRect))
+                    {
+                        *play_surrendersound_ptr = true;
+                        *is_surrender_ptr = true;
+                    }
 
                     // 检查是否点击了棋盘上的棋子
                     int board_x, board_y;
@@ -360,7 +368,7 @@ int main(int argc, char *argv[])
                     // 检查"回到菜单"按钮
                     if (pointInRect(mouseX, mouseY, returnButtonRect))
                     {
-                        printf("回到菜单\n");
+                        // printf("回到菜单\n");
                         currentState = MENU_STATE;
                         is_piece_selected = false;
                     }
@@ -368,23 +376,30 @@ int main(int argc, char *argv[])
                     // 检查"悔棋"按钮
                     if (pointInRect(mouseX, mouseY, revokeButtonRect))
                     {
-                        printf("悔棋\n");
+                        // printf("悔棋\n");
                         revokeLastMove();
                     }
 
                     // 检查"保存棋局"按钮
                     if (pointInRect(mouseX, mouseY, saveButtonRect))
                     {
-                        printf("保存棋局\n");
+                        // printf("保存棋局\n");
                         save_game_to_file(&current_game, "chess_game_record.txt");
                     }
 
                     // ====== 新增：检查"撤销悔棋"按钮 ======
                     if (pointInRect(mouseX, mouseY, redoButtonRect))
                     {
-                        printf("撤销悔棋\n");
-                        // TODO: 这里将来实现撤销悔棋功能
-                        // redoLastMove();
+                        // printf("撤销悔棋\n");
+                        //  TODO: 这里将来实现撤销悔棋功能
+                        //  redoLastMove();
+                    }
+
+                    // 检查投降按钮 -hu 12.28
+                    if (pointInRect(mouseX, mouseY, surrenderButtonRect))
+                    {
+                        *play_surrendersound_ptr = true;
+                        *is_surrender_ptr = true;
                     }
 
                     // 检查是否点击了棋盘上的棋子
@@ -668,6 +683,29 @@ int main(int argc, char *argv[])
                 // 绘制边框
                 SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
                 SDL_RenderDrawRect(renderer, &redoButtonRect);
+            }
+
+            // 渲染投降的按钮 -hu 12.28
+            if (surrender_button && currentState)
+            {
+                SDL_RenderCopy(renderer, surrender_button, NULL, &surrenderButtonRect);
+            }
+            else
+            {
+                // 如果图标加载失败，绘制默认按钮
+                SDL_SetRenderDrawColor(renderer, 200, 50, 50, 255);
+                SDL_RenderFillRect(renderer, &surrenderButtonRect);
+                // 绘制边框
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                SDL_RenderDrawRect(renderer, &surrenderButtonRect);
+            }
+
+            // "以上是" 游戏中其余的按钮的渲染部分 -hu 12.28
+            // 这里播放投降的音效:
+            if (*is_surrender_ptr == true)
+            {
+                Mix_PlayChannel(-1, surrender, 0);
+                *is_surrender_ptr = false;
             }
 
             // 这里展示胜败的画面:当然是红方胜利显示红方获胜,反之则是黑方  //-hu 12.26

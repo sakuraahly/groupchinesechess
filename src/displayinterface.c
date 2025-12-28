@@ -26,6 +26,7 @@ Mix_Chunk *choseChess;
 Mix_Chunk *eat;
 Mix_Chunk *jiangjun;
 Mix_Chunk *win;
+Mix_Chunk *surrender;
 bool is_music_playing;
 void init_music()
 {
@@ -35,6 +36,7 @@ void init_music()
     is_music_playing = false;
     jiangjun = Mix_LoadWAV("res/music/jiang.wav");
     win = Mix_LoadWAV("res/music/win.wav");
+    surrender = Mix_LoadWAV("res/music/surrender.wav");
 }
 
 // 棋盘布局  我想这总不会再搞错了-hu //现在修改为变量棋盘
